@@ -3,7 +3,6 @@ title: HTBAcademy Attacking Enterprise Networks Walkthrough
 date: 2025-03-14 00:00:01 +0800
 categories: [HackTheBox]
 tags: [HackTheBox]
-author: kevin_chen
 ---
 
 # HTBAcademy Attacking Enterprise Networks Walkthrough
