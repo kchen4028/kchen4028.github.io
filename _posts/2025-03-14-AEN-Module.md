@@ -4,9 +4,6 @@ date: 2025-03-14 00:00:01 +0800
 categories: [HackTheBox]
 tags: [HackTheBox]
 ---
-
-# HTBAcademy Attacking Enterprise Networks Walkthrough
-
 ## First Flag
 
 The first flag was found using the following command:
