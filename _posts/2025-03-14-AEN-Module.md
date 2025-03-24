@@ -283,3 +283,8 @@ After we get the fully interactive reverse shell, we see that we are the "webdev
 b447c27a00e3a348881b0030177000cd
 ```
 ### Twelveth Flag:
+
+For the twelveth flag, unfortunately I had to refer to the Attacking Enterprise Networks module as I was not able to make any ground myself. From the module, we learn that if we have control over an adm user, in this case we have webdev which is close enough, we can use aureport to read audit logs which may have saved the command line history in plaintext. 
+```
+aureport --tty | less
+```
