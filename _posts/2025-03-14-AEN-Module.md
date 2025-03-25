@@ -8,7 +8,7 @@ Attacking Enterprise Networks is the final module for the HackTheBox Certified P
 
 Credit to Yerald Leiva on YouTube for his voiceless walkthrough which helped me navigate this box. This is the first full-scale blackbox engagement that I ever attempted, and whenever I got stuck his videos helped me on further tuning my methodology. 
 
-## First Flag
+## First Flag:
 
 The first flag was found using the following command:
 
@@ -45,7 +45,7 @@ ffuf -w SecLists/Discovery/DNS/namelist.txt:FUZZ -u http://10.129.229.147 -H 'Ho
 ```
 We additionally get monitoring.inlanefreight.local as a subdomain.
 
-## Second Flag
+## Second Flag:
 
 Found using an FTP anonymous login:
 
@@ -67,11 +67,11 @@ profile      [Status: 200, Size: 10148, Words: 3146, Lines: 195, Duration: 159ms
 register     [Status: 200, Size: 9754, Words: 2772, Lines: 191, Duration: 182ms]
 ```
 
-### Third Flag
+### Third Flag:
 Then I browsed all the parameters and eventually got to http://careers.inlanefreight.local:80/register?id=1 to register an account with arbitrary credentials which authenticated me to the web server. I then was able view other profiles on http://careers.inlanefreight.local:80/profile?id=4 by adjusting the id parameter
 which got me the third flag: HTB{8f40ecf17f681612246fa5728c159e46}
 
-### Fourth Flag
+### Fourth Flag:
 Next, I moved on to dev.inlanefreight.local. I used ffuf to enumerate any php files which got me to dev.inlanefreight.local/login.php. I noticed that I did not have access via the HTTP GET request, so I tried different HTTP requests until I noticed that the TRACK request worked (TRACE request did not work either), and then noticed from the original GET request that there was an HTTP line called X-Custom-IP-Authorization, which declared a 172 ip address. I set it to loopback address to try to declare myself as an authorized ip address, which successfully got me onto the login.php website. 
 
 Then, I see a file upload button and tried uploading a PHP web shell. It did not work since the uploader only allowed img/png files. I uploaded a test png file and recorded the HTTP POST request on BurpSuite. I changed the JPG code to the php web shell code, and then sent it again on BurpSuite to the site. This is successful and gave me a response saying that file was uploaded to /uploads/screenshot.png:
