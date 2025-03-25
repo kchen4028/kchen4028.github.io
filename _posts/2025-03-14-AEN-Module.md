@@ -8,7 +8,7 @@ Attacking Enterprise Networks is the final module for the HackTheBox Certified P
 
 Credit to Yerald Leiva on YouTube for his voiceless walkthrough which helped me navigate this box. This is the first full-scale blackbox engagement that I ever attempted, and whenever I got stuck his videos helped me on further tuning my methodology. 
 
-## First Flag:
+### First Flag:
 
 The first flag was found using the following command:
 
@@ -45,7 +45,7 @@ ffuf -w SecLists/Discovery/DNS/namelist.txt:FUZZ -u http://10.129.229.147 -H 'Ho
 ```
 We additionally get monitoring.inlanefreight.local as a subdomain.
 
-## Second Flag:
+### Second Flag:
 
 Found using an FTP anonymous login:
 
