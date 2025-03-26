@@ -462,5 +462,18 @@ cd target-NFS
 Then we see the DEV01 share that has a flag.txt file and finally we find the Fourteenth Flag: bf22a1d0acfca4af517e1417a80e92d1.
 
 ### Fifteenth Flag:
+In the DNN Directory of DEV01 share, we also see cleartext administrator credentials in the web.config file:
+```
+  <username>Administrator</username>
+  <password>
+	<value>D0tn31Nuk3R0ck$$@123</value>
+```
+From web.deploy.config, we also see a potential SQL database called "MyDB"
 
+We now try to get on the website of 172.16.8.20. We use:
+```
+sudo proxychains firefox 172.16.8.20
+```
+However it does not seem to load. The problem was that SOCKS4 proxychains was not supported, so we change to the newer SOCKS5 which has UDP and authentication support by changing socks4 to socks5 in proxychains.conf. 
+We then rerun the above command. We also change the browser network settings for firefox to manual proxy with the loopback address and port set for SOCK5. 
 
