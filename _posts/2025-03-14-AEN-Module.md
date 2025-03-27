@@ -472,8 +472,22 @@ From web.deploy.config, we also see a potential SQL database called "MyDB"
 
 We now try to get on the website of 172.16.8.20. We use:
 ```
-sudo proxychains firefox 172.16.8.20
+proxychains firefox 172.16.8.20
 ```
-However it does not seem to load. The problem was that SOCKS4 proxychains was not supported, so we change to the newer SOCKS5 which has UDP and authentication support by changing socks4 to socks5 in proxychains.conf. 
+However it does not seem to load. The problem was probably that SOCKS4 proxychains was not supported, so we change to the newer SOCKS5 which has UDP and authentication support by changing socks4 to socks5 in proxychains.conf. 
 We then rerun the above command. We also change the browser network settings for firefox to manual proxy with the loopback address and port set for SOCK5. 
+
+I had issues for a few hours getting proxychains to work. I eventually had to reinstall proxychains with 
+```
+sudo apt-get remove --purge proxychains
+sudo apt-get autoremove
+sudo apt-get update
+sudo apt-get install proxychains
+```
+We then try to get to the login page of 172.16.8.20 since we have administrator credentials to test. It seems very slow to load. 
+```
+Administrator
+D0tn31Nuk3R0ck$$@123
+```
+
 
