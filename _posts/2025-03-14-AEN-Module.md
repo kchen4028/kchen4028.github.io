@@ -481,5 +481,19 @@ We enter the credentials below and then
 Administrator
 D0tn31Nuk3R0ck$$@123
 ```
+The site loads super slowly and eventually times me out. I see that on the root host, I was getting a lot of channel open failed, so I see that SSH port forwarding is not working well. I then decide to try using Chisel HTTP tunneling instead of pure SSH port forwarding. I downloaded the Chisel binary from GitHub, scp'd it to the root user's directory on DMZ01, and set up a SOCKS5 tunnel with Chisel using DMZ01 as the Chisel server and my attack box as the Chisel client using the similar commands as below:
+```
+ubuntu@WEB01:~$ ./chisel server -v -p 1234 --socks5
+2022/05/05 18:16:25 server: Fingerprint Viry7WRyvJIOPveDzSI2piuIvtu9QehWw9TzA3zspac=
+2022/05/05 18:16:25 server: Listening on http://0.0.0.0:1234
 
-
+TheControlDevil@htb[/htb]$ ./chisel client -v 10.129.202.64:1234 socks
+2022/05/05 14:21:18 client: Connecting to ws://10.129.202.64:1234
+2022/05/05 14:21:18 client: tun: proxy#127.0.0.1:1080=>socks: Listening
+2022/05/05 14:21:18 client: tun: Bound proxies
+2022/05/05 14:21:19 client: Handshaking...
+2022/05/05 14:21:19 client: Sending config
+2022/05/05 14:21:19 client: Connected (Latency 120.170822ms)
+2022/05/05 14:21:19 client: tun: SSH connected
+```
+We also make sure that we have socks5 127.0.0.1 1080 in our /etc/proxychains.conf file since 1080 is the default proxychains port that will connect to the Chisel tunnel. After this, we do proxychains firefox 172.16.8.20 again and see that we have no lag connecting to the website and entering in our credentials after upgrading our pure SSH tunnel to a Chisel tunnel. 
