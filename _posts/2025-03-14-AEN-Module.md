@@ -515,3 +515,12 @@ nt service\mssql$sqlexpress
 ```
 We now run a privilege check with whoami /priv and get:
 ```
+Privilege Name Description State
+============================= ========================================= ========
+SeAssignPrimaryTokenPrivilege Replace a process level token Disabled
+SeIncreaseQuotaPrivilege Adjust memory quotas for a process Disabled
+SeChangeNotifyPrivilege Bypass traverse checking Enabled
+SeImpersonatePrivilege Impersonate a client after authentication Enabled 
+```
+We got something big, SeImpersonatePrivilege enabled should definitely be exploitable. The file upload function on the SQL console does not work, so we try using Site Manager to upload a shell.aspx file to get a webshell. We actually have to rename the shell.aspx file to a name other than shell as the file will not upload due to the backend stopping any files named "shell" from uploading. 
+
