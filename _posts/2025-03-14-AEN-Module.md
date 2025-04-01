@@ -522,5 +522,15 @@ SeIncreaseQuotaPrivilege Adjust memory quotas for a process Disabled
 SeChangeNotifyPrivilege Bypass traverse checking Enabled
 SeImpersonatePrivilege Impersonate a client after authentication Enabled 
 ```
-We got something big, SeImpersonatePrivilege enabled should definitely be exploitable. The file upload function on the SQL console does not work, so we try using Site Manager to upload a shell.aspx file to get a webshell. We actually have to rename the shell.aspx file to a name other than shell as the file will not upload due to the backend stopping any files named "shell" from uploading. 
+We got something big, SeImpersonatePrivilege enabled should definitely be exploitable. The file upload function on the SQL console does not work, so we try using Site Manager to upload a shell.aspx file to get a webshell. We actually have to rename the shell.aspx file to a name other than shell as the file will not upload due to the backend stopping any files named "shell" from uploading. After uploading the webshell, we can copy the file url and browse to it.
+
+We check the webshell machine on 172.16.8.20 and see that the hostname is ACADEMY-AEN-DEV with OS name Windows Server 2019 Standard and OS version 10. This means that its likely vulnerable to the PrintSpoofer.exe vulnerability which escalates shell privilege to SYSTEM. 
+
+Now that we know we have SeImpersonate privilege and that the Windows, we can use PrintSpoofer.exe and nc.exe to create a SYSTEM privilege reverse shell:
+```
+PrintSpoofer.exe -i -c cmd
+
+C:\WINDOWS\system32>whoami
+nt authority\system
+```
 
