@@ -613,4 +613,11 @@ After a long journey, we finally get the 15th flag from C:\Users\Administrator\D
 ```
 K33p_0n_sp00fing!
 ```
+### Sixteenth Flag:
+Easy flag, it is located at C:\Share\flag.txt.
+```
+bf22a1d0acfca4af517e1417a80e92d1
+```
+
+### Seventeenth Flag:
 
