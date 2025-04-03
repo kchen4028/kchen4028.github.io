@@ -759,79 +759,23 @@ $mySrvConn.ServerInstance=$serverName
 $mySrvConn.LoginSecure = $false
 $mySrvConn.Login = "backupadm"
 $mySrvConn.Password = "!qazXSW@"
+```
+We also see a script that may contain useful unformation in the sysvol folder INLANEFREIGHT.LOCAL/scripts/adum.vbs
+```
+proxychains smbclient -U ssmalls '//172.16.8.3/sysvol'
+(cd to directory)
+get adum.vbs
+```
+and we read the file:
+```
+cat adum.vbs
 
-$server = new-object Microsoft.SqlServer.Management.SMO.Server($mySrvConn)
+Const cdoUserName = "account@inlanefreight.local"	'EMAIL - USERNAME - IF AUTHENTICATION REQUIRED
+Const cdoPassword = "L337^p@$$w0rD"			'EMAIL - PASSWORD - IF AUTHENTICATION REQUIRED
+```
+We get two sets of credentials. 
 
-$dbs = $server.Databases
-$startDate = (Get-Date)
-"$startDate"
-
-Get-ChildItem "$backupDirectory\*_daily.bak" |? { $_.lastwritetime -le (Get-Date).AddDays(-$daysToStoreDailyBackups)} |% {Remove-Item $_ -force }
-"removed all previous daily backups older than $daysToStoreDailyBackups days"
-
-foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
-{
-    $dbName = $database.Name      
-
-    $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
-    $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_daily.bak"
-
-    $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
-    $smoBackup.Action = "Database"
-    $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
-    $smoBackup.BackupSetName = $dbName + " Backup"
-    $smoBackup.Database = $dbName
-    $smoBackup.MediaDescription = "Disk"
-    $smoBackup.Devices.AddDevice($targetPath, "File")
-    $smoBackup.SqlBackup($server) 
-    "backed up $dbName ($serverName) to $targetPath"               
-}
-
-if([Int] (Get-Date).DayOfWeek -eq 0)
-{
-    Get-ChildItem "$backupDirectory\*_weekly.bak" |? { $_.lastwritetime -le (Get-Date).AddDays(-$daysToStoreWeeklyBackups)} |% {Remove-Item $_ -force }
-    "removed all previous daily backups older than $daysToStoreWeeklyBackups days"
-
-    foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
-    {
-        $dbName = $database.Name      
-
-        $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
-        $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_weekly.bak"
-
-        $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
-        $smoBackup.Action = "Database"
-        $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
-        $smoBackup.BackupSetName = $dbName + " Backup"
-        $smoBackup.Database = $dbName
-        $smoBackup.MediaDescription = "Disk"
-        $smoBackup.Devices.AddDevice($targetPath, "File")
-        $smoBackup.SqlBackup($server) 
-        "backed up $dbName ($serverName) to $targetPath"                 
-    }
-}
-
-if([Int] (Get-Date).Day -eq 1)
-{
-    Get-ChildItem "$backupDirectory\*_monthly.bak" |? { $_.lastwritetime -le (Get-Date).AddMonths(-$monthsToStoreMonthlyBackups)} |% {Remove-Item $_ -force }
-    "removed all previous monthly backups older than $monthsToStoreMonthlyBackups days"
-
-    foreach ($database in $dbs | where { $_.IsSystemObject -eq $False})
-    {
-        $dbName = $database.Name      
-
-        $timestamp = Get-Date -format yyyy-MM-dd-HHmmss
-        $targetPath = $backupDirectory + "\" + $dbName + "_" + $timestamp + "_monthly.bak"
-
-        $smoBackup = New-Object ("Microsoft.SqlServer.Management.Smo.Backup")
-        $smoBackup.Action = "Database"
-        $smoBackup.BackupSetDescription = "Full Backup of " + $dbName
-        $smoBackup.BackupSetName = $dbName + " Backup"
-        $smoBackup.Database = $dbName
-        $smoBackup.MediaDescription = "Disk"
-        $smoBackup.Devices.AddDevice($targetPath, "File")
-        $smoBackup.SqlBackup($server) 
-        "backed up $dbName ($serverName) to $targetPath"S
-    }
-}
+We now can also use PowerView to get a list of users that can be kerberoasted with the following command:
+```
+Get-DomainUser * -SPN |Select samaccountname
 ```
