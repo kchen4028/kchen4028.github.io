@@ -672,7 +672,7 @@ We see that we have available shares from the domain controller:
 [INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/Department Shares>(R) Share for department users
 [INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/NETLOGON>(R) Logon server share
 [INLANEFREIGHT/hporter@ACADEMY-AEN-DEV01] 2025-04-03 20:07:45Z [Share] {Green}<//DC01.INLANEFREIGHT.LOCAL/SYSVOL>(R) Logon server share
-``
+```
 We see an interesting share on the domain controller 172.16.8.3 that is accessible with our hporter account: //DC01.INLANEFREIGHT.LOCAL/Department Shares.
 We then can use netexec's spider_plus module to attempt to enumerate all of the shares' contents:
 ```
