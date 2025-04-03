@@ -832,4 +832,6 @@ if([Int] (Get-Date).Day -eq 1)
         $smoBackup.Devices.AddDevice($targetPath, "File")
         $smoBackup.SqlBackup($server) 
         "backed up $dbName ($serverName) to $targetPath"S
+    }
+}
 ```
