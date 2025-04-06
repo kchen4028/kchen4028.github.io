@@ -855,9 +855,24 @@ Nmap done: 1 IP address (1 host up) scanned in 0.32 seconds
 ```
 It is up so we can use Evil-WinRM to remote in:
 ```
-proxychains evil-winrm -i 172.16.8.50 -u backupadm -p ILFreightnixadm!
+proxychains evil-winrm -i 172.16.8.50 -u backupadm -p !qazXSW@
 ```
 Since WinRM uses a kerberos ticket to authenticate, we won't be able to authenticate when using certain tools due to the Kerberos double-hop problem, so we need to set up a PSCredential object using PowerView to workaround that. 
+
+Poking around in the host we see an unattend.xml file which is used to automate and customize the Windows installation process. Upon using the type command we see the following credentials:
+```
+ilfserveradm
+Sys26Admin
+```
+We can do net user ilfserveradm and we see that this is a Remote Desktop User, meaning that we can use xfreerdp with these credentials to reconnect to the host. 
+
+```
+sudo proxychains xfreerdp /v:172.16.8.50 /u:ilfserveradm /p:Sys26Admin /drive:/home,"/home/kchen"
+```
+We see that there is a program called Sysax FTP Automation with version 6.90 in Program Files x86 with the following privilege escalation exploit on exploitdb: https://www.exploit-db.com/exploits/50834
+
+We follow the directions in the exploit and eventually get SYSTEM privilege.
+
 
 
 
