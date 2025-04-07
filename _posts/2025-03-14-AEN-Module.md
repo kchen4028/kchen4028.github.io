@@ -985,6 +985,10 @@ inlanefreight.local\wdill
 ```
 Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. Once we login, we see that we are finally domain and enterprise admin.
 
+We find the final flag on the Administrator's desktop: 7c09eb1fff981654a3bb3b4a4e0d176a
+
+
+
 
 
 
