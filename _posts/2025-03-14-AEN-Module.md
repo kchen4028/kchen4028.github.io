@@ -6,6 +6,8 @@ tags: [CPTS]
 ---
 Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It combines all of the concepts from previous modules and best emulates the 10-day black-box penetration test expected to be taken as an exam after completing said modules. It is best advised to attack this module blind as preparation for the exam. 
 
+We are given a target IP, a domain, and a VPN connection to start with. 
+
 ### First Flag:
 
 The first flag was found using the following dig command to request a DNS zone transfer from the target ip:
