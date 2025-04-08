@@ -1153,25 +1153,26 @@ flag.txt  snap
 From here, we can keep trying to enumerate more networks, files, and systems to further prove impact on this penetration test. We can experiment with various ways to exfiltrate data so that the client can test their DLP Data Loss Prevention measures, as well as try our hand at attacking domain trusts to compromise intra-domain trusts and external domain trusts.
 
 If this were a real engagement, we should be noting down:
-Every scan
-Attack attempt
-File placed on a system
-Changes made (accounts created, minor configuration changes, etc.)
+
+-Every scan
+-Attack attempt
+-File placed on a system
+-Changes made (accounts created, minor configuration changes, etc.)
 
 Before the engagement closes, we should delete any files we uploaded (tools, shells, payloads, notes) and restore everything to the way we found it. Regardless of if we were able to clean everything up, we should still note down in our report appendices every change, file uploaded, account compromise, and host compromise, along with the methods used. We should also retain our logs and a detailed activity log for a period after the assessment ends in case the client needs to correlate any of our testing activities with some alerts. Treat the network in this module like a real-world customer network. 
 
 This was my first black-box penetration test engagement I have ever done, and I have to admit I did a lot of googling and AI-fu. Hopefully in the next boxes I do I will not require nearly as much hand-holding from external resources. It took me almost a month to complete this single module, and despite all the Googling and AI I used there were still many times where a particular attack or tool didn't work the way it should and caused me lots of frustration in terms of trying to fix it and/or finding an alternative. This is especially true for trying to get proxychains to work, as even when I did get the proxychains tunnel to connect, the tunnel was just not reliable for browsing to internal websites due to the lag. It felt great once I got Chisel to work and experienced 0 lag on internal websites after my failure with proxychains. All in all, the Penetration Tester path on HackTheBox took a ton of work in terms of both reading material and machines to hack, even with Google-fu and ChatGPT. Getting to this point from 0 modules on the path took me approximately 4 months with an approximate daily study time of 2 hours, so you can definitely do it faster if you were dedicated and had the hours to spare. 
 
-```
+
 Amazing work! You have made it to the end of the Attacking Enterprise Networks module and perhaps even the end of the Penetration Tester job role path. In the process you accomplished the following:
 
-- `Hacked around 250 Targets`
-- `400+ module sections completed`
-- `500+ challenge questions solved`
-- `Over 750,000 words read`
+Hacked around 250 Targets
+400+ module sections completed
+500+ challenge questions solved
+Over 750,000 words read
 
 Those alone are significant achievements worthy of being proud!
-```
+
 
 
 
