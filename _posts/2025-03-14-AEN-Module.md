@@ -1154,10 +1154,10 @@ From here, we can keep trying to enumerate more networks, files, and systems to 
 
 If this were a real engagement, we should be noting down:
 
--Every scan
--Attack attempt
--File placed on a system
--Changes made (accounts created, minor configuration changes, etc.)
+- Every scan
+- Attack attempt
+- File placed on a system
+- Changes made (accounts created, minor configuration changes, etc.)
 
 Before the engagement closes, we should delete any files we uploaded (tools, shells, payloads, notes) and restore everything to the way we found it. Regardless of if we were able to clean everything up, we should still note down in our report appendices every change, file uploaded, account compromise, and host compromise, along with the methods used. We should also retain our logs and a detailed activity log for a period after the assessment ends in case the client needs to correlate any of our testing activities with some alerts. Treat the network in this module like a real-world customer network. 
 
@@ -1166,10 +1166,10 @@ This was my first black-box penetration test engagement I have ever done, and I 
 
 Amazing work! You have made it to the end of the Attacking Enterprise Networks module and perhaps even the end of the Penetration Tester job role path. In the process you accomplished the following:
 
-Hacked around 250 Targets
-400+ module sections completed
-500+ challenge questions solved
-Over 750,000 words read
+ - Hacked around 250 Targets
+ - 400+ module sections completed
+ - 500+ challenge questions solved
+ - Over 750,000 words read
 
 Those alone are significant achievements worthy of being proud!
 
