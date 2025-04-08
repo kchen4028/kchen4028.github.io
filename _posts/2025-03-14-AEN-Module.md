@@ -1,6 +1,7 @@
 ---
-title: Attacking Enterprise Networks
+title: Hack The Box - Academy - Attacking Enterprise Networks
 date: 2025-03-14 00:00:01 +0800
+image: /images/AttackingEnterpriseNetworks.jpg
 categories: [HTBAcademy]
 tags: [CPTS]
 ---
