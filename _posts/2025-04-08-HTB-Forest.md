@@ -149,18 +149,17 @@ The smb service does not allow us to use "ls" to list the directory unfortunatel
 rpcclient -N -U "" 10.10.10.161
 rpcclient $> 
 ```
+but I don't get anything interesting either.
 
-
-
-I do a pingsweep:
+It is possible that SMB is a dead end. We will try exploiting LDAP instead since we see that LDAP is open from enum4linux:
 ```
-for i in {1..254} ;do (ping -c 1 10.10.10.$i | grep "bytes from" &) ;done
-64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=19.3 ms
-64 bytes from 10.10.10.3: icmp_seq=1 ttl=63 time=21.2 ms
-64 bytes from 10.10.10.40: icmp_seq=1 ttl=127 time=23.5 ms
-64 bytes from 10.10.10.172: icmp_seq=1 ttl=127 time=30.7 ms
-64 bytes from 10.10.10.182: icmp_seq=1 ttl=127 time=24.0 ms
-64 bytes from 10.10.10.213: icmp_seq=1 ttl=127 time=22.1 ms
+[*] Checking LDAP
+[+] LDAP is accessible on 389/tcp
+[*] Checking LDAPS
+[+] LDAPS is accessible on 636/tcp
 ```
-and see that there are many hosts in the subnet that are active. I can begin enumerating them all with a single nmap command:
+We use this command:
 ```
+ldapsearch -x -H ldap://10.10.10.161 -b "DC=htb,DC=local"
+```
+and we get a huge page of domain information, meaning that the domain controller is misconfigured to allow for LDAP binds. 
