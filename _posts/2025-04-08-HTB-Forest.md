@@ -1,6 +1,6 @@
 ---
 title: Hack The Box - CTF Lab - Forest
-date: 2025-03-14 00:00:01 +0800
+date: 2025-04-08 00:00:01 +0800
 image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
 tags: [CPTS]
