@@ -136,7 +136,7 @@ Domain logoff information:
  =========================================
 [*] Check for null session
 [+] Server allows session using username '', password ''
-
+```
 Since I see that the server allows session using username and password, I try to use smbclient again. I will try with the -smb2 tag as well as trying to enumerate the default $IPC share, which works:
 ```
 smbclient -N -m SMB2 //10.10.10.161/IPC$
