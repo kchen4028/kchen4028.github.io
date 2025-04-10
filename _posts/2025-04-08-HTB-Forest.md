@@ -5,7 +5,7 @@ image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
 tags: [CPTS]
 ---
-This is the first HackTheBox CTF lab in the famous Ippsec's unofficial CPTS preparation playlist. I will attempt to blog all 20 boxes in the playlist; this is the first of 20 boxes. All boxes will be done in the classic Adventure Mode where no step-by-step questions/tips will be given so that we can simulate a black-box environment. Of course, if I get stuck for one or two hours and if neither my entire methodology nor ChatGPT, Grok3, ClaudeAI can solve the question I will give up and turn on the easier Guided Mode for tips. 
+This is the first HackTheBox CTF lab in the famous Ippsec's unofficial CPTS preparation playlist. I will attempt to blog all 20 boxes in the playlist; this is the first of 20 boxes. 
 
 Upon connecting to the VPN on the HackTheBox platform, we are given an IP address of the target that is 10.10.10.161. 
 
@@ -163,3 +163,9 @@ We use this command:
 ldapsearch -x -H ldap://10.10.10.161 -b "DC=htb,DC=local"
 ```
 and we get a huge page of domain information, meaning that the domain controller is misconfigured to allow for LDAP binds. 
+We can save this output to a text file and be able to pull all of the usernames from the LDAP service using ldapsearch:
+```
+ldapsearch -x -H ldap://10.10.10.161 -b "DC=htb,DC=local" '(objectClass=User)' sAMAccountName | grep sAMAccountName | awk '{print $2}'
+```
+
+ 
