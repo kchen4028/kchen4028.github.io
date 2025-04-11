@@ -1,9 +1,9 @@
 ---
-title: Hack The Box - CTF Lab - Forest
+title: Hack The Box - CTF Lab - Forest - Easy
 date: 2025-04-08 00:00:01 +0800
 image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
-tags: [CPTS]
+tags: [CPTS, Easy]
 ---
 This is the first HackTheBox CTF lab in the famous Ippsec's unofficial CPTS preparation playlist. I will attempt to blog all 20 boxes in the playlist; this is the first of 20 boxes. 
 

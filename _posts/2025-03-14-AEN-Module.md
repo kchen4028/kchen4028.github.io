@@ -2,7 +2,7 @@
 title: Hack The Box - Academy - Attacking Enterprise Networks
 date: 2025-03-14 00:00:01 +0800
 image: /images/AttackingEnterpriseNetworks.jpg
-categories: [HTBAcademy]
+categories: [HTB Academy]
 tags: [CPTS]
 ---
 Attacking Enterprise Networks is the final module for the HackTheBox Certified Penetration Tester Specialist career pathway. It combines all of the concepts from previous modules and best emulates the 10-day black-box penetration test expected to be taken as an exam after completing said modules. It is best advised to attack this module blind as preparation for the exam. 
