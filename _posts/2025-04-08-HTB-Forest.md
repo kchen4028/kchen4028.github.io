@@ -52,7 +52,34 @@ Host script results:
 | smb2-security-mode: 
 |   3:1:1: 
 |_    Message signing enabled and required
-
+```
+We might as well also do a full nmap port scan with -p-
+```
+sudo nmap -p- -T4 10.10.10.161
+53/tcp    open  domain
+88/tcp    open  kerberos-sec
+135/tcp   open  msrpc
+139/tcp   open  netbios-ssn
+389/tcp   open  ldap
+445/tcp   open  microsoft-ds
+464/tcp   open  kpasswd5
+593/tcp   open  http-rpc-epmap
+636/tcp   open  ldapssl
+3268/tcp  open  globalcatLDAP
+3269/tcp  open  globalcatLDAPssl
+5985/tcp  open  wsman
+9389/tcp  open  adws
+47001/tcp open  winrm
+49664/tcp open  unknown
+49665/tcp open  unknown
+49666/tcp open  unknown
+49667/tcp open  unknown
+49671/tcp open  unknown
+49676/tcp open  unknown
+49677/tcp open  unknown
+49684/tcp open  unknown
+49706/tcp open  unknown
+49932/tcp open  unknown
 ```
 I first tried seeing if I could access any websites with the ip on my browser on all of the HTTP ports but that did not give me anything. 
 
@@ -294,5 +321,71 @@ Netexec gave us a plus symbol but no "pwned" sign, meaning that we cannot login 
 
 ```
 netexec smb 10.10.10.161 -u svc-alfresco -p s3rvice --shares
+SMB         10.10.10.161    445    FOREST           [*] Windows 10 / Server 2016 Build 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True)
+SMB         10.10.10.161    445    FOREST           [+] htb.local\svc-alfresco:s3rvice 
+SMB         10.10.10.161    445    FOREST           [*] Enumerated shares
+SMB         10.10.10.161    445    FOREST           Share           Permissions     Remark
+SMB         10.10.10.161    445    FOREST           -----           -----------     ------
+SMB         10.10.10.161    445    FOREST           ADMIN$                          Remote Admin
+SMB         10.10.10.161    445    FOREST           C$                              Default share
+SMB         10.10.10.161    445    FOREST           IPC$            READ            Remote IPC
+SMB         10.10.10.161    445    FOREST           NETLOGON        READ            Logon server share 
+SMB         10.10.10.161    445    FOREST           SYSVOL          READ            Logon server share 
+```
+An interesting share we see is SYSVOL. We try to connect to SMB using smbclient:
+```
+smbclient //10.10.10.161/SYSVOL -U svc-alfresco -m SMB2
+Password for [WORKGROUP\svc-alfresco]:
+Try "help" to get a list of possible commands.
+smb: \> get
+get <filename> [localname]
+smb: \> ls
+  .                                   D        0  Wed Sep 18 13:45:49 2019
+  ..                                  D        0  Wed Sep 18 13:45:49 2019
+  htb.local                          Dr        0  Wed Sep 18 13:45:49 2019
+
+		5069055 blocks of size 4096. 2533698 blocks available
 ```
 
+After searching very hard, we find an interesting .inf file from the machine GUID {6AC1786C-016F-11D2-945F-00C04fB984F9}:
+```
+cat GptTmpl.inf 
+��[Unicode]
+Unicode=yes
+[Registry Values]
+MACHINE\System\CurrentControlSet\Services\NTDS\Parameters\LDAPServerIntegrity=4,1
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\RequireSignOrSeal=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\RequireSecuritySignature=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\EnableSecuritySignature=4,1
+[Version]
+signature="$CHICAGO$"
+Revision=1
+[Privilege Rights]
+SeAssignPrimaryTokenPrivilege = *S-1-5-19,*S-1-5-20
+SeAuditPrivilege = *S-1-5-19,*S-1-5-20
+SeBackupPrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549
+SeBatchLogonRight = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-559
+SeChangeNotifyPrivilege = *S-1-1-0,*S-1-5-19,*S-1-5-20,*S-1-5-32-544,*S-1-5-11,*S-1-5-32-554
+SeCreatePagefilePrivilege = *S-1-5-32-544
+SeDebugPrivilege = *S-1-5-32-544
+SeIncreaseBasePriorityPrivilege = *S-1-5-32-544
+SeIncreaseQuotaPrivilege = *S-1-5-19,*S-1-5-20,*S-1-5-32-544
+SeInteractiveLogonRight = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-548,*S-1-5-32-549,*S-1-5-32-550,*S-1-5-9
+SeLoadDriverPrivilege = *S-1-5-32-544,*S-1-5-32-550
+SeMachineAccountPrivilege = *S-1-5-11
+SeNetworkLogonRight = *S-1-1-0,*S-1-5-32-544,*S-1-5-11,*S-1-5-9,*S-1-5-32-554
+SeProfileSingleProcessPrivilege = *S-1-5-32-544
+SeRemoteShutdownPrivilege = *S-1-5-32-544,*S-1-5-32-549
+SeRestorePrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549
+SeSecurityPrivilege = *S-1-5-21-3072663084-364016917-1341370565-1118,*S-1-5-32-544
+SeShutdownPrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549,*S-1-5-32-550
+SeSystemEnvironmentPrivilege = *S-1-5-32-544
+SeSystemProfilePrivilege = *S-1-5-32-544,*S-1-5-80-3139157870-2983391045-3678747466-658725712-1809340420
+SeSystemTimePrivilege = *S-1-5-19,*S-1-5-32-544,*S-1-5-32-549
+SeTakeOwnershipPrivilege = *S-1-5-32-544
+SeUndockPrivilege = *S-1-5-32-544
+SeEnableDelegationPrivilege = *S-1-5-32-544
+```
+This is the sheet of which AD groups are assigned to which privileges. We can abuse this later for privilege escalation. 
+
+We can now move on from SMB, and recall that from our nmap scan that the winRM port 5985 is open, meaning we can use Evil-WinRM to remote into the domain controller with the svc-alfresco and s3rvice credentials. 
