@@ -1,5 +1,5 @@
 ---
-title: Hack The Box - CTF Lab - Forest - Easy
+title: Hack The Box - Retired CTF Lab - Forest - Easy
 date: 2025-04-08 00:00:01 +0800
 image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
