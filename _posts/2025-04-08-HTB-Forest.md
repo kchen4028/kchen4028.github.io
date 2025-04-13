@@ -5,7 +5,7 @@ image: /images/HackTheBoxForest.jpg
 categories: [HTB Labs]
 tags: [CPTS, Easy]
 ---
-This is the first HackTheBox CTF lab in the famous Ippsec's unofficial CPTS preparation playlist. I will attempt to blog all 20 boxes in the playlist; this is the first of 20 boxes. 
+Forest in an easy difficulty Windows Domain Controller (DC), for a domain in which Exchange Server has been installed. The DC is found to allow anonymous LDAP binds, which is used to enumerate domain objects. The password for a service account with Kerberos pre-authentication disabled can be cracked to gain a foothold. The service account is found to be a member of the Account Operators group, which can be used to add users to privileged Exchange groups. The Exchange group membership is leveraged to gain DCSync privileges on the domain and dump the NTLM hashes.
 
 Upon connecting to the VPN on the HackTheBox platform, we are given an IP address of the target that is 10.10.10.161. 
 
