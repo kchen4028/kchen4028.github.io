@@ -1,6 +1,6 @@
 ---
 title: Hack The Box - CTF Lab - Soccer - Easy
-date: 2025-04-12 00:00:01 +0800
+date: 2025-04-18 00:00:01 +0800
 image: /images/Soccer.png
 categories: [HTB Labs]
 tags: [CPTS, Easy]
