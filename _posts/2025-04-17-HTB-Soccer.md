@@ -101,3 +101,8 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 26.75 seconds
 ```
 
+We ping the machine and see that the TTL is 64, meaning that it is most likely a Linux machine. 
+
+We have ports 22, 80, and 9091. We check ports 80 and 9091 to see if we can access a website. We try port 9091 and see that there is an error in the get request. We then check port 80 and see that it is inaccessible, however it seems it is redirecting us to the hostname soccer.htb, which may not have a DNS record on the local DNS server. We can try adding it to our /etc/resolv.conf file. 
+```
+soccer.htb 
