@@ -105,4 +105,49 @@ We ping the machine and see that the TTL is 64, meaning that it is most likely a
 
 We have ports 22, 80, and 9091. We check ports 80 and 9091 to see if we can access a website. We try port 9091 and see that there is an error in the get request. We then check port 80 and see that it is inaccessible, however it seems it is redirecting us to the hostname soccer.htb, which may not have a DNS record on the local DNS server. We can try adding it to our /etc/resolv.conf file. 
 ```
-soccer.htb 
+soccer.htb 10.10.11.194
+```
+and we see that we can now reach the website by typing in soccer.htb on the browser.
+
+We try a gobuster query:
+```
+gobuster dir -u http://soccer.htb/ -w SecLists/Discovery/Web-Content/raft-small-words.txt
+
+/.html                (Status: 403) [Size: 162]
+/.htm                 (Status: 403) [Size: 162]
+/.                    (Status: 200) [Size: 6917]
+/.htaccess            (Status: 403) [Size: 162]
+/.htc                 (Status: 403) [Size: 162]
+/.html_var_DE         (Status: 403) [Size: 162]
+/.htpasswd            (Status: 403) [Size: 162]
+/.html.               (Status: 403) [Size: 162]
+/.html.html           (Status: 403) [Size: 162]
+/.htpasswds           (Status: 403) [Size: 162]
+/.htm.                (Status: 403) [Size: 162]
+/.htmll               (Status: 403) [Size: 162]
+/.html.old            (Status: 403) [Size: 162]
+/tiny                 (Status: 301) [Size: 178] [--> http://soccer.htb/tiny/]
+/.html.bak            (Status: 403) [Size: 162]
+/.ht                  (Status: 403) [Size: 162]
+/.htm.htm             (Status: 403) [Size: 162]
+/.htgroup             (Status: 403) [Size: 162]
+/.hta                 (Status: 403) [Size: 162]
+/.html1               (Status: 403) [Size: 162]
+/.html.printable      (Status: 403) [Size: 162]
+/.html.LCK            (Status: 403) [Size: 162]
+/.htm.LCK             (Status: 403) [Size: 162]
+/.htaccess.bak        (Status: 403) [Size: 162]
+/.htx                 (Status: 403) [Size: 162]
+/.htmls               (Status: 403) [Size: 162]
+/.htuser              (Status: 403) [Size: 162]
+/.htlm                (Status: 403) [Size: 162]
+/.html-               (Status: 403) [Size: 162]
+/.htm2                (Status: 403) [Size: 162]
+```
+
+And we see the tiny file manager at this directory: http://soccer.htb/tiny/
+
+
+
+
+
