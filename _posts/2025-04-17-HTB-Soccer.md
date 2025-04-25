@@ -147,6 +147,11 @@ gobuster dir -u http://soccer.htb/ -w SecLists/Discovery/Web-Content/raft-small-
 
 And we see the tiny file manager at this directory: http://soccer.htb/tiny/
 
+We look up default credentials on Google and find this pair: admin/admin@123
+
+We enter it and miraculously it works.
+![image tooltip](images\Screenshot 2025-04-25 192146.png)
+
 
 
 
