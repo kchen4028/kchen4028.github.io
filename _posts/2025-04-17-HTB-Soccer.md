@@ -150,7 +150,7 @@ And we see the tiny file manager at this directory: http://soccer.htb/tiny/
 We look up default credentials on Google and find this pair: admin/admin@123
 
 We enter it and miraculously it works:
-![image tooltip](images\Screenshot 2025-04-25 192146.png)
+![image tooltip](/images/Screenshot%202025-04-25%20192146.png)
 
 It seems that we can upload files, so since tiny file manager is a web-based php file manager, we try several php shells but the below cannot be uploaded:
 ```
