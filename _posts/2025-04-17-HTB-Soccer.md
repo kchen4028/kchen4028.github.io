@@ -208,4 +208,34 @@ server {
 
 }
 ```
+We then add the FQDN to our /etc/hosts file in our Linux machine:
+```
+10.10.11.194 soccer.htb soc-player.soccer.htb
+```
+We then try to access the website, but just writing soc-player.soccer.htb on Mozilla Firefox or Chrome just enters the name as a Google search. For the browser to treat the FQDN as a website and not a Google search, we need to put a forward slash:
+```
+soc-player.soccer.htb/
+```
+Now we see the website.
 
+We browse through the website and notice that we can easily create an account using an arbitrary email address and password. We can instantly login without email verification and see that it has created a ticket ID for us. We enter in the ticket ID in the query box and it says our ticket exists. If we enter in a random number, it says our ticket does not exist.
+
+This can potentially be a SQL injection, so we test with SQL queries.
+
+The standard query doesn't work:
+```
+100' OR 1=1-- -
+
+This ticket does not exist
+```
+
+But we also try this query incase the backend is not taking in a string but a raw number:
+```
+$sql = "SELECT * FROM users WHERE user_id = $user_id"; //backend takes in number only
+```
+and so 
+100' OR 1=1-- - would give you a quotation error
+while
+100 OR 1=1-- - is a valid SQL injection
+
+![image tooltip](/images/Screenshot%202025-05-07%20211412.png)
