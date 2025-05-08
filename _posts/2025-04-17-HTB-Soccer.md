@@ -186,10 +186,26 @@ fg
 export TERM=xterm
 ```
 
-
-
-We try enumerating vhosts with ffuf:
+We then check for any vhosts by going to the /etc folder and browsing the /nginx, /apache2, and the /httpd folders for any web server configuration files. We find one at /etc/nginx/site-enabled which shows the default hostname configuration and then the additional vhost called "soc-player.soccer.htb"
 ```
-ffuf -w SecLists/Discovery/DNS/namelist.txt:FUZZ -u http://soccer.htb -H 'Host:FUZZ.soccer.htb' -fs 178
+www-data@soccer:/etc/nginx/sites-enabled$ cat soc-player.htb 
+server {
+	listen 80;
+	listen [::]:80;
+
+	server_name soc-player.soccer.htb;
+
+	root /root/app/views;
+
+	location / {
+		proxy_pass http://localhost:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection 'upgrade';
+		proxy_set_header Host $host;
+		proxy_cache_bypass $http_upgrade;
+	}
+
+}
 ```
 
