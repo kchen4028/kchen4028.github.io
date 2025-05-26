@@ -56,7 +56,12 @@ Host script results:
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 114.87 seconds
 ```
-From the nmap scan, we notice that the host is a Domain Controller since it is running LDAP. We also know the OS version is Windows Server 2008. 
+From the nmap scan, we notice that the host is a Domain Controller since it is running LDAP. We also know the OS version is Windows Server 2008 and the domain is active.htb. 
+
+Like we did in HTB-Forest, we can try using Impacket's GetNPUsers.py to see if there are any domain users who do not have Kerberos preauthentication enabled which would allow us to access their TGT/hashed password. 
+
+```
+GetNPUsers.py -dc-ip 10.10.10.100 -request 'active.htb/'
 
 
 
