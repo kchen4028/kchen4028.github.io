@@ -1,7 +1,7 @@
 ---
 title: Hack The Box - CTF Lab - Soccer - Easy
 date: 2025-04-18 00:00:01 +0800
-image: /images/Soccer.png
+image: /images/thumbnails/Soccer.png
 categories: [HTB Labs]
 tags: [CPTS, Easy]
 ---
@@ -150,7 +150,7 @@ And we see the tiny file manager at this directory: http://soccer.htb/tiny/
 We look up default credentials on Google and find this pair: admin/admin@123
 
 We enter it and miraculously it works:
-![image tooltip](/images/Screenshot%202025-04-25%20192146.png)
+![image tooltip](/images/screenshots/Screenshot%202025-04-25%20192146.png)
 
 It seems that we can upload files, so since tiny file manager is a web-based php file manager, we try several php shells but the below cannot be uploaded:
 ```
@@ -238,7 +238,7 @@ and so
 while
 100 OR 1=1-- - is a valid SQL injection
 
-![image tooltip](/images/Screenshot%202025-05-07%20211412.png)
+![image tooltip](/images/screenshots/Screenshot%202025-05-07%20211412.png)
 
 We then open BurpSuite to intercept the request when entering the SQL injection where we get the following WebSocket request:
 ```
