@@ -304,4 +304,10 @@ And as you can see, we find the user.txt flag.
 
 ### User.txt found
 
+Now that we have the user account, we can check for additional permissions.
 
+We run 
+```
+find / -user root -perm -4000 -exec ls -ldb {} \; 2>/dev/null
+```
+to see if we have any SETUID permissions. 
