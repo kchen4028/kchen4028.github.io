@@ -63,5 +63,12 @@ Like we did in HTB-Forest, we can try using Impacket's GetNPUsers.py to see if t
 ```
 GetNPUsers.py -dc-ip 10.10.10.100 -request 'active.htb/'
 
+[-] Error in searchRequest -> operationsError: 000004DC: LdapErr: DSID-0C09075A, comment: In order to perform this operation a successful bind must be completed on the connection., data 0, v1db1
+```
+Unfortunately we see that the DC does not allow for anonymous binding.
+
+Next, we try testing against the SMB service. 
+
+
 
 
