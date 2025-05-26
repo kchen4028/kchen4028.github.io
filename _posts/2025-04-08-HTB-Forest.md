@@ -437,4 +437,4 @@ c768b23a159c977fb5f02c7fb13cc7b6
 ```
 ### root.txt file found
 
-That is it, we have successfully found both user.txt and root.txt files that the box is asking for by escalating to Domain/Enterprise admin on the domain controller, primarily by abusing the open Kerberos service and kerberos-preauthentication disabled. 
+That is it, we have successfully found both user.txt and root.txt files that the box is asking for by escalating to Domain/Enterprise admin on the domain controller, primarily by abusing the DC that allows anonymous LDAP binds and an open Kerberos service that contains accounts with Kerberos pre-authentication disabled. 
