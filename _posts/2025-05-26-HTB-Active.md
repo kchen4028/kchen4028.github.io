@@ -69,6 +69,34 @@ Unfortunately we see that the DC does not allow for anonymous binding.
 
 Next, we try testing against the SMB service. 
 
+```
+smbclient -N -L //10.10.10.100
+Anonymous login successful
 
+	Sharename       Type      Comment
+	---------       ----      -------
+	ADMIN$          Disk      Remote Admin
+	C$              Disk      Default share
+	IPC$            IPC       Remote IPC
+	NETLOGON        Disk      Logon server share 
+	Replication     Disk      
+	SYSVOL          Disk      Logon server share 
+	Users           Disk      
+SMB1 disabled -- no workgroup available
+```
+We see that anonymous login is successful and we have several shares that are listed. 
 
+We test to see if we can access any of these shares and we do find a share that allows read access:
+```
+smbclient -N //10.10.10.100/Replication
+Anonymous login successful
+Try "help" to get a list of possible commands.
+smb: \> ls
+  .                                   D        0  Sat Jul 21 06:37:44 2018
+  ..                                  D        0  Sat Jul 21 06:37:44 2018
+  active.htb                          D        0  Sat Jul 21 06:37:44 2018
+
+		5217023 blocks of size 4096. 278565 blocks available
+smb: \> 
+```
 
