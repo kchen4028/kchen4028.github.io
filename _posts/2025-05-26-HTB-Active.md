@@ -166,6 +166,11 @@ SMB1 disabled -- no workgroup available
 ```
 and we see that we now have the Users share.
 
-We browse to it and find the user flag:
+We browse to it and find the user flag in the SVC_TGS Desktop folder:
 ```
+09022c4e2bd9be3d687a4c9fd7f4b932
+```
+
+### user.txt found
+
 
