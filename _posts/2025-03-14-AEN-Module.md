@@ -13,7 +13,7 @@ We are given a target IP, a domain, and a VPN connection to start with.
 
 The first flag was found using the following dig command to request a DNS zone transfer from the target ip:
 
-```sh
+```
 dig axfr inlanefreight.local @10.129.229.147
 ```
 

