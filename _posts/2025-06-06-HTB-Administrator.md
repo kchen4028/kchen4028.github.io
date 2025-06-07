@@ -62,6 +62,21 @@ Host script results:
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 99.39 seconds
 ```
+We notice the presence of an ftp server on port 21. 
+
+We try to connect to it anonymously:
+```
+ftp anonymous@10.10.11.42
+Connected to 10.10.11.42.
+220 Microsoft FTP Service
+331 Password required
+Password: 
+421 Service not available, remote server has closed connection.
+ftp: Login failed
+```
+but it asks for a password. 
+
+We can tell from the ports that 10.10.11.42 is a domain controller. 
 
 
 
