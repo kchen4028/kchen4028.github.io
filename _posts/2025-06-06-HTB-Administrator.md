@@ -66,23 +66,49 @@ Nmap done: 1 IP address (1 host up) scanned in 99.39 seconds
 ```
 We notice the presence of an ftp server on port 21. 
 
-We try to connect to it anonymously:
+We try to connect to it with the provided user credentials:
 ```
-ftp anonymous@10.10.11.42
+ftp Olivia@10.10.11.42
 Connected to 10.10.11.42.
 220 Microsoft FTP Service
 331 Password required
 Password: 
-421 Service not available, remote server has closed connection.
+530 User cannot log in, home directory inaccessible.
 ftp: Login failed
+ftp> 
 ```
-but it asks for a password. 
+but the user Olivia is either restricted or does not have an ftp directory.
 
-We can tell from the ports that 10.10.11.42 is a domain controller. 
-
-I try an LDAP bind with the provided account credentials:
+From the credentials we were given (Olivia:ichliebedich), let's test if this is a local computer account or a domain user account by using ldapsearch:
 ```
-ldapsearch -x -H ldap://10.10.11.42 -b "DC=htb0,DC=local" -s sub "(objectClass=*)"
+ldapsearch -x -H ldap://10.10.11.42 -D "ADMINISTRATOR\Olivia" -w ichliebedich -b "DC=administrator,DC=htb0" -s sub "(objectClass=*)"
+# extended LDIF
+#
+# LDAPv3
+# base <DC=administrator,DC=htb0> with scope subtree
+# filter: (objectClass=*)
+# requesting: ALL
+#
+
+# search result
+search: 2
+result: 10 Referral
+text: 0000202B: RefErr: DSID-0310084B, data 0, 1 access points
+	ref 1: 'adminis
+ trator.htb0'
+
+ref: ldap://administrator.htb0/DC=administrator,DC=htb0
+
+# numResponses: 1
+```
+and by using the NETBIOS format we see that there is an entry on the domain controller.
+
+Now that we have confirmed these are domain user credentials, we can use bloodhound.py to 
+
+
+
+
+
 
 
 
