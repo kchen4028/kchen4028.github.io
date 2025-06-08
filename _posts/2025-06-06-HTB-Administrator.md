@@ -226,6 +226,9 @@ sudo evil-winrm -u emily -p UXLCI5iETUsIBoFVTj8yQFKoHjXmb -i 10.10.11.42
 ```
 and we finally get the user.txt file.
 
+### user.txt found
+
+
 
 
 
