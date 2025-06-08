@@ -311,7 +311,7 @@ evil-winrm -i 10.10.11.42 -u Administrator -H'3dc553ce4b9fd20bd016e098d2d2fd2e'
 4ac8d0e26ad1bb226b8aff899123f135
 ```
 
-All in all, this box was relatively easy since you start with a domain user account, assuming you did not have any trouble getting Bloodhound to work, which can be a huge pain. All you need to do is investigate the credentials in Bloodhound for lateral movement, as well as utilize the ftp server to acquire the psafe file, crack the psafe master password using hashcat, and download passwordsafe to utilize the psafe file. 
+All in all, this box was pretty easy since you start with a domain user account, assuming you did not have any trouble getting Bloodhound to work, which can be a huge pain. Most of the work lies in investigating your access in Bloodhound for lateral movement, as well as utilize the ftp server to acquire the psafe file, crack the psafe master password using hashcat, and download passwordsafe to utilize the psafe file. 
 
 
 
